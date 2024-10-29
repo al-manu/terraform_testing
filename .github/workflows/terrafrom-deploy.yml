@@ -26,13 +26,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
-        working-directory: ./terraform-testing/modules/vpc
+        working-directory: ./terraform-testing
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: ./terraform-testing/modules/vpc
+        working-directory: ./terraform-testing
         run: terraform plan
 
       - name: Terraform Apply
-        working-directory: ./terraform-testing/modules/vpc
+        working-directory: ./terraform-testing
         run: terraform apply -auto-approve
