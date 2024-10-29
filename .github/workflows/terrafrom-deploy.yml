@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ACTIONS_STEP_DEBUG: true  # Enable debugging for all steps
-
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -25,19 +25,19 @@ jobs:
           
       - name: Configure AWS credentials
         id: aws_auth
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v2  # Updated to v2
         with:
           role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
-        working-directory: ./terraform-testing
+       # working-directory: ./terraform-testing
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: ./terraform-testing
+       # working-directory: ./terraform-testing
         run: terraform plan
 
       - name: Terraform Apply
-        working-directory: ./terraform-testing
+       # working-directory: ./terraform-testing
         run: terraform apply -auto-approve
