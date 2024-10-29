@@ -8,7 +8,9 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-
+    env:
+      ACTIONS_STEP_DEBUG: true  # Enable debugging for all steps
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -20,7 +22,7 @@ jobs:
       
       - name: Check Environment Variables
         run: env
-        
+          
       - name: Configure AWS credentials
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v1
