@@ -1,52 +1,51 @@
 provider "aws" {
-  region = "eu-central-1"
+  region = var.aws_region  # Use the specified AWS region from variables
 }
 
-# Create the VPC
-resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_support   = var.enable_dns_support
-  enable_dns_hostnames = var.enable_dns_hostnames
-  tags = {
-    Name = var.vpc_name
-  }
+# Create an IAM role for the Lambda function
+resource "aws_iam_role" "lambda_role" {
+  name               = "lambda_execution_role"  # Name of the IAM role
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Principal = {
+          Service = "lambda.amazonaws.com"  # Allows Lambda to assume this role
+        }
+        Effect    = "Allow"
+        Sid       = ""
+      },
+    ]
+  })
 }
 
-# Create an Internet Gateway
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-  tags = {
-    Name = "${var.vpc_name}-igw"
-  }
+# Attach the basic execution policy to the role
+resource "aws_iam_policy_attachment" "lambda_policy_attachment" {
+  name       = "lambda_policy_attachment"  # Name of the policy attachment
+  roles      = [aws_iam_role.lambda_role.name]  # Attach to the created IAM role
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"  # Policy for basic execution and logging
 }
 
-# Create a public subnet
-resource "aws_subnet" "public" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "eu-central-1a"
+# Define the Lambda function
+resource "aws_lambda_function" "my_lambda" {
+  function_name = "myBasicLambda"  # Name of the Lambda function
+  role          = aws_iam_role.lambda_role.arn  # ARN of the IAM role
+  handler       = "lambda_function.lambda_handler"  # The handler function to execute (filename.function_name)
+  runtime       = "python3.8"  # Runtime environment for the Lambda function
+  timeout       = 3  # Timeout in seconds (within free tier limits)
   
-  tags = {
-    Name = "${var.vpc_name}-public-subnet"
+  # Specify the code for the Lambda function
+  filename         = "lambda_function.zip"  # Path to the zip file containing the Lambda code
+  source_code_hash = filebase64sha256("lambda_function.zip")  # Hash of the zip file for change detection
+  
+  environment = {  # Environment variables for the Lambda function
+    AWS_DEV_ROLE_ARN = var.aws_dev_role_arn  # Pass the AWS role ARN from GitHub Actions secret
+    AWS_REGION       = var.aws_region  # Pass the AWS region from GitHub Actions secret
   }
 }
 
-# Create a route table
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
-  }
-
-  tags = {
-    Name = "${var.vpc_name}-public-route-table"
-  }
-}
-
-# Associate the route table with the public subnet
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public.id
+# Output the ARN of the Lambda function after deployment
+output "lambda_function_arn" {
+  value = aws_lambda_function.my_lambda.arn  # Outputs the ARN of the created Lambda function
 }
