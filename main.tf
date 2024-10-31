@@ -1,39 +1,24 @@
-# Create an IAM role for the Lambda function
-resource "aws_iam_role" "lambda_role" {
-  name               = "lambda_execution_role"  # Name of the IAM role
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action    = "sts:AssumeRole"
-        Principal = {
-          Service = "lambda.amazonaws.com"  # Allows Lambda to assume this role
-        }
-        Effect    = "Allow"
-        Sid       = ""
-      },
-    ]
-  })
+# Fetch existing IAM role by name
+data "aws_iam_role" "existing_role" {
+  name = var.aws_role_name  # Fetch the role by name
 }
 
-# Attach the basic execution policy to the role
+# Attach the basic execution policy to the existing role
 resource "aws_iam_policy_attachment" "lambda_policy_attachment" {
-  name       = "lambda_policy_attachment"  # Name of the policy attachment
-  roles      = [aws_iam_role.lambda_role.name]  # Attach to the created IAM role
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"  # Policy for basic execution and logging
+  name       = "lambda_policy_attachment"
+  roles      = [data.aws_iam_role.existing_role.name]  # Attach to the existing IAM role
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# Define the Lambda function
+# Define the Lambda function using the existing role
 resource "aws_lambda_function" "my_lambda" {
-  function_name = "myBasicLambda"  # Name of the Lambda function
-  role          = aws_iam_role.lambda_role.arn  # ARN of the IAM role
-  handler       = "lambda_function.lambda_handler"  # The handler function to execute (filename.function_name)
-  runtime       = "python3.8"  # Runtime environment for the Lambda function
-  timeout       = 3  # Timeout in seconds (within free tier limits)
+  function_name = "myBasicLambda"
+  role          = data.aws_iam_role.existing_role.arn  # Use the existing IAM role ARN
+  handler       = "lambda_function.lambda_handler"
+  runtime       = "python3.8"
+  timeout       = 3
   
   # Specify the code for the Lambda function
-  filename         = "lambda_function.zip"  # Path to the zip file containing the Lambda code
-  source_code_hash = filebase64sha256("lambda_function.zip")  # Hash of the zip file for change detection
-  
-
+  filename         = "lambda_function.zip"
+  source_code_hash = filebase64sha256("lambda_function.zip")
 }

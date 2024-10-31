@@ -6,3 +6,8 @@ variable "aws_role_arn" {
   description = "The ARN of the role to assume"
   type        = string
 }
+
+variable "aws_role_name" {
+  description = "The name of the role to assume"
+  type        = string
+}
