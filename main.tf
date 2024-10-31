@@ -1,6 +1,3 @@
-provider "aws" {
-  region = var.aws_region  # Set AWS region from variable
-}
 
 # Create an IAM role for the Lambda function
 resource "aws_iam_role" "lambda_role" {
