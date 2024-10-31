@@ -39,10 +39,7 @@ resource "aws_lambda_function" "my_lambda" {
   filename         = "lambda_function.zip"  # Path to the zip file containing the Lambda code
   source_code_hash = filebase64sha256("lambda_function.zip")  # Hash of the zip file for change detection
   
-  environment = {  # Environment variables for the Lambda function
-    AWS_DEV_ROLE_ARN = var.aws_dev_role_arn  # Pass the AWS role ARN from GitHub Actions secret
-    AWS_REGION       = var.aws_region  # Pass the AWS region from GitHub Actions secret
-  }
+
 }
 
 # Output the ARN of the Lambda function after deployment
