@@ -1,6 +1,10 @@
-# Fetch existing IAM role by name
+provider "aws" {
+  region = var.aws_region  # Set AWS region from variable
+}
+
+# Data source to get the IAM role by ARN
 data "aws_iam_role" "existing_role" {
-  name = var.aws_role_name  # Fetch the role by name
+  arn = var.aws_role_arn  # Fetch the role by ARN
 }
 
 # Attach the basic execution policy to the existing role
