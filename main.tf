@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.aws_region  # Use the specified AWS region from variables
-}
-
 # Create an IAM role for the Lambda function
 resource "aws_iam_role" "lambda_role" {
   name               = "lambda_execution_role"  # Name of the IAM role
@@ -40,9 +36,4 @@ resource "aws_lambda_function" "my_lambda" {
   source_code_hash = filebase64sha256("lambda_function.zip")  # Hash of the zip file for change detection
   
 
-}
-
-# Output the ARN of the Lambda function after deployment
-output "lambda_function_arn" {
-  value = aws_lambda_function.my_lambda.arn  # Outputs the ARN of the created Lambda function
 }
