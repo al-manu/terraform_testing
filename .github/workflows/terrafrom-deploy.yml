@@ -48,8 +48,9 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-       # working-directory: ./terraform-testing
-        run: terraform plan
+        run: |
+            terraform plan -var "aws_region=${{ secrets.AWS_REGION }}" -var "aws_role_arn=${{ secrets.AWS_ROLE_ARN }}" \
+            | tee terraform-plan.log
 
       - name: Terraform Apply
        # working-directory: ./terraform-testing
