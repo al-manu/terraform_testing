@@ -14,7 +14,6 @@ jobs:
       id-token: write  # Required for OIDC.
       contents: read
 
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -44,12 +43,23 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
-       # working-directory: ./terraform-testing
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=terraform/dev.tfstate" \
+            -backend-config="region=${{ secrets.AWS_REGION }}"
 
       - name: Terraform Plan
+        id: plan
         run: |
-            terraform plan 
+            terraform plan -out=tfplan
+
+      - name: Check for Changes in Plan
+        run: |
+          if [ "$(terraform show -json tfplan | jq '.resource_changes | length')" -eq 0 ]; then
+            echo "No changes to apply."
+            exit 0  # Skip apply if no changes
+          fi
+
       - name: Terraform Apply
-       # working-directory: ./terraform-testing
-        run: terraform apply  -auto-approve
+        run: terraform apply -auto-approve tfplan
