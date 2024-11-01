@@ -12,8 +12,9 @@ jobs:
     #   ACTIONS_STEP_DEBUG: true  # Enable debugging for all steps
     permissions:
       id-token: write  # Required for OIDC.
-      contents: read
-
+      contents: read        
+    env:
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Pass your S3 bucket secret here
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -41,9 +42,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-          
-        env:
-          TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Pass your S3 bucket secret here
+
       - name: Terraform Init
         run: |
           terraform init \
