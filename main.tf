@@ -42,6 +42,5 @@ terraform {
   backend "s3" {
     bucket = "aa-terraform-state-bucket"
     key    = "terraform/state.tfstate"
-    region = var.aws_region
   }
 }
