@@ -1,0 +1,33 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:  # Allows manual triggering of this workflow
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_STEP_DEBUG: true
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Ensure you pass necessary variables
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.9.8
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3 
+        with:
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
