@@ -1,15 +1,11 @@
-my-aws-infra/
-├── .github/
-│   └── workflows/
-│       └── terraform-deploy.yml
-├── env/
-│   └── dev.tfvars
-├── modules/
-│   └── vpc/
-│       ├── main.tf
-│       ├── variables.tf
-│       └── outputs.tf
-├── main.tf
-├── variables.tf
-├── outputs.tf
-└── README.md
+```
+└── 📁terraform_testing
+    └── 📁.github
+        └── 📁workflows
+            └── terrafrom-deploy.yml
+    └── lambda_function.py
+    └── main.tf
+    └── outputs.tf
+    └── README.md
+    └── variables.tf
+```
