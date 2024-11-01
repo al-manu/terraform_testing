@@ -37,7 +37,7 @@ resource "aws_lambda_function" "my_lambda" {
   source_code_hash = filebase64sha256("lambda_function.zip")  # Hash of the zip file for change detection
 }
 
-
+# fstate directory
 terraform {
   backend "s3" {
     bucket = "aa-terraform-state-bucket"
