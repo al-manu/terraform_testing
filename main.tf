@@ -36,3 +36,12 @@ resource "aws_lambda_function" "my_lambda" {
   filename         = "lambda_function.zip"  # Path to the zip file containing the Lambda code
   source_code_hash = filebase64sha256("lambda_function.zip")  # Hash of the zip file for change detection
 }
+
+
+terraform {
+  backend "s3" {
+    bucket = "aa-terraform-state-bucket"
+    key    = "terraform/state.tfstate"
+    region = var.aws_region
+  }
+}
