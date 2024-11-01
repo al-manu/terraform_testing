@@ -8,8 +8,8 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    env:
-      ACTIONS_STEP_DEBUG: true  # Enable debugging for all steps
+    # env:
+    #   ACTIONS_STEP_DEBUG: true  # Enable debugging for all steps
     permissions:
       id-token: write  # Required for OIDC.
       contents: read
