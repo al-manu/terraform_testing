@@ -42,10 +42,9 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
           
-
-      - name: Terraform Init
         env:
           TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Pass your S3 bucket secret here
+      - name: Terraform Init
         run: |
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
