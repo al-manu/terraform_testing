@@ -56,7 +56,7 @@ jobs:
 
       - name: Check for Changes in Plan
         run: |
-          if [ "$(terraform show -json tfplan | jq '.resource_changes | length')" -eq 0 ]; then
+          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
             echo "No changes to apply."
             exit 0  # Skip apply if no changes
           fi
