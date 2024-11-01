@@ -26,7 +26,7 @@ resource "aws_iam_policy_attachment" "lambda_policy_attachment" {
 
 # Define the Lambda function using the newly created role
 resource "aws_lambda_function" "my_lambda" {
-  function_name = "myBasicLambda"  # Name of the Lambda function
+  function_name = "myBasicLambda_beta"  # Name of the Lambda function
   role          = aws_iam_role.lambda_role.arn  # ARN of the IAM role
   handler       = "lambda_function.lambda_handler"  # The handler function to execute
   runtime       = "python3.8"  # Runtime environment for the Lambda function
