@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - dev
-
 jobs:
   terraform:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
-      contents: read
+      contents: read     
+    environment:
+        name: dev 
 
     steps:
       - name: Checkout code
