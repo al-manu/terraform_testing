@@ -3,6 +3,8 @@ name: Deploy to SIT
 on:
   pull_request:
     types: [review_requested, reviewed]  # Focus on review events
+    branches:
+      - main
 
 jobs:
   deploy:
