@@ -52,7 +52,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -out=tfplan -var-file=environments/dev.tfvars
+          terraform plan -out=tfplan -var-file=environments/sit.tfvars
 
 
       - name: Check for Changes in Plan
@@ -63,6 +63,4 @@ jobs:
           fi
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var-file=environments/dev.tfvars tfplan
-
-
+        run: terraform apply -auto-approve tfplan

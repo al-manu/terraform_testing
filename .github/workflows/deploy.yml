@@ -62,5 +62,4 @@ jobs:
           fi
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var-file=environments/dev.tfvars tfplan
-
+        run: terraform apply -auto-approve tfplan
