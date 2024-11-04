@@ -12,21 +12,12 @@ jobs:
       id-token: write  # Required for OIDC.
       contents: read        
     env:
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for TF state
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         
-    #   - name: Set up Python
-    #     uses: actions/setup-python@v2
-    #     with:
-    #       python-version: '3.8'
-  
-    #   - name: Create Lambda zip file
-    #     run: |
-    #       zip lambda_function.zip lambda_function.py
-  
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v1
         with:
@@ -39,8 +30,8 @@ jobs:
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3 
         with:
-          role-to-assume: ${{ secrets.AWS_PROD_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_PROD_ROLE_ARN }}  # Role for AWS production
+          aws-region: ${{ secrets.AWS_REGION }}  # AWS region
 
       - name: Terraform Init
         run: |
@@ -52,7 +43,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-         terraform plan -out=tfplan -var-file=environments/prod.tfvars
+          terraform plan -out=tfplan -var-file=environments/prod.tfvars
 
       - name: Check for Changes in Plan
         run: |
@@ -62,4 +53,4 @@ jobs:
           fi
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan  # Apply the planned changes
