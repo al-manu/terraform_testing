@@ -26,7 +26,14 @@ jobs:
         uses: hashicorp/setup-terraform@v2  # Updated to v2 for Node.js 16 compatibility
         with:
           terraform_version: 1.9.8  # Ensure this is the latest stable version
+        
+      - name: Check Environment Variables
+        run: |
+            echo "AWS_ROLE_ARN: $AWS_ROLE_ARN"
+            echo "AWS_REGION: $AWS_REGION"
+            echo "TF_VAR_TF_STATE_BUCKET: $TF_VAR_TF_STATE_BUCKET"
 
+            
       - name: Configure AWS credentials
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3 
