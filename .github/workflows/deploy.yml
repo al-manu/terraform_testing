@@ -9,9 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
-      contents: read     
+      contents: read  
+
     environment:
         name: dev 
+    env:
+        AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+        TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
 
     steps:
       - name: Checkout code

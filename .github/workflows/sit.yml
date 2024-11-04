@@ -12,8 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
-      contents: read        
+      contents: read      
 
+    environment:
+        name: sit 
+        
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Use the AWS role from secrets
       AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
