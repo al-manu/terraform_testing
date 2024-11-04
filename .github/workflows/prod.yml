@@ -13,7 +13,8 @@ jobs:
       contents: read        
     env:
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for TF state
-
+      role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Role for AWS production environment
+      ACTIONS_STEP_DEBUG: true  # Enable debugging for all steps
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -30,7 +31,7 @@ jobs:
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3 
         with:
-          role-to-assume: ${{ secrets.AWS_PROD_ROLE_ARN }}  # Role for AWS production
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Role for AWS production
           aws-region: ${{ secrets.AWS_REGION }}  # AWS region
 
       - name: Terraform Init
