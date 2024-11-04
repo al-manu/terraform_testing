@@ -9,57 +9,58 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # Required for OIDC.
-      contents: read        
+      id-token: write  # Required for OIDC
+      contents: read
+
     env:
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Pass your S3 bucket secret here
+      # Pass AWS role and region as environment variables
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for Terraform state
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-        
-    #   - name: Set up Python
-    #     uses: actions/setup-python@v2
-    #     with:
-    #       python-version: '3.8'  # Specify the Python version
-  
-    #   - name: Create Lambda zip file
-    #     run: |
-    #       zip lambda_function.zip lambda_function.py  # Adjust if your file is named differently
-  
+        uses: actions/checkout@v3  # Updated to v3 for Node.js 16 compatibility
+
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v2  # Updated to v2 for Node.js 16 compatibility
         with:
-          terraform_version: 1.9.8
-      
-      - name: Check Environment Variables
-        run: env
-          
+          terraform_version: 1.9.8  # Ensure this is the latest stable version
+
       - name: Configure AWS credentials
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3 
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}  # Use the environment variable
+          aws-region: ${{ env.AWS_REGION }}  # Use the environment variable
 
       - name: Terraform Init
         run: |
+          set -e  # Exit immediately if a command exits with a non-zero status
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/dev.tfstate" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"
+            -backend-config="region=${{ env.AWS_REGION }}"  # Use the environment variable
 
       - name: Terraform Plan
         id: plan
         run: |
+          set -e
           terraform plan -out=tfplan -var-file=environments/dev.tfvars
 
       - name: Check for Changes in Plan
         run: |
+          set -e
           if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
             echo "No changes to apply."
             exit 0  # Skip apply if no changes
           fi
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: |
+          set -e
+          terraform apply -auto-approve tfplan
+
+      - name: Cleanup
+        run: |
+          terraform workspace select default || terraform workspace new default  # Ensure the default workspace is selected
