@@ -30,3 +30,14 @@ variable "export_bucket_name" {
   type        = string
   default     = "test-export-oct2401"  # Change this as needed for your environment
 }
+
+
+variable "environment" {
+  description = "The environment to deploy (dev, sit, prod)"
+  type        = string
+}
+
+variable "bucket_name" {
+  description = "The name of the S3 bucket"
+  type        = string
+}
