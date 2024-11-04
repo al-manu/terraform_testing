@@ -3,28 +3,63 @@ name: Deploy to Dev
 on:
   push:
     branches:
-      - 'dev/*'  # Adjust this to match your feature branch naming convention
+      - 'feature/*'  # Adjust this to match your feature branch naming convention
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC.
+      contents: read        
+    env:
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Pass your S3 bucket secret here
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
+        
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'  # Specify the Python version
+  
+      - name: Create Lambda zip file
+        run: |
+          zip lambda_function.zip lambda_function.py  # Adjust if your file is named differently
+  
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: 1.9.8
+      
+      - name: Check Environment Variables
+        run: env
+          
+      - name: Configure AWS credentials
+        id: aws_auth
+        uses: aws-actions/configure-aws-credentials@v3 
+        with:
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="key=dev/terraform.tfstate" -backend-config="region=eu-central-1"
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=terraform/dev.tfstate" \
+            -backend-config="region=${{ secrets.AWS_REGION }}"
 
       - name: Terraform Plan
-        run: terraform plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan
+
+      - name: Check for Changes in Plan
+        run: |
+          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
+            echo "No changes to apply."
+            exit 0  # Skip apply if no changes
+          fi
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform apply -auto-approve tfplan
