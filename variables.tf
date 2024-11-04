@@ -37,8 +37,3 @@ variable "environment" {
   type        = string
 }
 
-
-variable "aws_region" {
-  description = "The AWS region for resources"
-  type        = string
-}
