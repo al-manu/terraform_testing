@@ -3,7 +3,7 @@ name: Deploy to Dev
 on:
   push:
     branches:
-      - 'feature/*'  # Adjust this to match your feature branch naming convention
+      - 'dev/*'  # Adjust this to match your feature branch naming convention
 
 jobs:
   terraform:
