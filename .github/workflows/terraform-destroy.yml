@@ -1,34 +1,47 @@
-name: Terraform Destroy Ressources
-
+name: Terraform Destroy Specific
 
 on:
-  workflow_dispatch:  # Allows manual triggering of this workflow
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to destroy'
+        required: true
+        default: 'dev'
 
 jobs:
-  terraform:
+  destroy:
     runs-on: ubuntu-latest
-    env:
-      ACTIONS_STEP_DEBUG: true
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Ensure you pass necessary variables
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-
+    environment:
+      name: ${{ github.event.inputs.environment }}  # Dynamically use environment input
+      url: ${{ steps.deploy.outputs.url }}
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.9.8
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3 
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_SIT_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Terraform Plan (Destruction)
+        run: |
+          terraform init
+          terraform plan -destroy -out=tfplan -var-file=environments/${{ github.event.inputs.environment }}.tfvars
+          terraform show -no-color tfplan
+
+      - name: Manual Approval for Destruction
+        if: github.event.inputs.environment == 'prod'  # For production, manual approval is required
+        run: |
+          echo "Please manually approve the destruction for prod."
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        if: github.event.inputs.environment != 'prod'  # Skip in prod if manual approval is required
+        run: |
+          terraform apply -auto-approve tfplan
