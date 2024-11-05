@@ -13,15 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.event.inputs.environment }}  # Dynamically use the input environment
-      url: ${{ steps.deploy.outputs.url }}  # Optional, if you want to set environment URL
 
     permissions:
       id-token: write  # Required for OIDC authentication
-      contents: read  # Access to repository contents
+      contents: read   # Access to repository contents
 
     env:
-      # Dynamically reference secrets based on the specified environment using `format` for concatenation
-      AWS_ROLE_ARN: ${{ secrets[format('AWS_{0}_ROLE_ARN', github.event.inputs.environment | upper)] }}  # AWS Role for the environment
+      # Use explicit environment checks instead of format()
+      AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Default to SIT
       AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Terraform state bucket
 
@@ -38,12 +37,29 @@ jobs:
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets[format('AWS_{0}_ROLE_ARN', github.event.inputs.environment | upper)] }}  # Dynamically use the role ARN for the environment
-          aws-region: ${{ secrets.AWS_REGION }}  # Use AWS region (you can adjust for each environment if needed)
+          role-to-assume: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Default to SIT
+          aws-region: ${{ secrets.AWS_REGION }}  # Use AWS region
         env:
-          AWS_ROLE_ARN: ${{ secrets[format('AWS_{0}_ROLE_ARN', github.event.inputs.environment | upper)] }}  # Set the environment's AWS role ARN
+          AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Default to SIT
           AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region
-          TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Set the Terraform state bucket
+          TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Terraform state bucket
+
+      # Dynamically select the correct role and terraform files based on input environment
+      - name: Set environment-specific values
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
+            echo "Setting PROD environment variables"
+            echo "AWS_ROLE_ARN=${{ secrets.AWS_PROD_ROLE_ARN }}" >> $GITHUB_ENV
+            echo "TF_VAR_TF_STATE_BUCKET=${{ secrets.PROD_TF_STATE_BUCKET }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" == "sit" ]; then
+            echo "Setting SIT environment variables"
+            echo "AWS_ROLE_ARN=${{ secrets.AWS_SIT_ROLE_ARN }}" >> $GITHUB_ENV
+            echo "TF_VAR_TF_STATE_BUCKET=${{ secrets.TF_STATE_BUCKET }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" == "dev" ]; then
+            echo "Setting DEV environment variables"
+            echo "AWS_ROLE_ARN=${{ secrets.AWS_DEV_ROLE_ARN }}" >> $GITHUB_ENV
+            echo "TF_VAR_TF_STATE_BUCKET=${{ secrets.DEV_TF_STATE_BUCKET }}" >> $GITHUB_ENV
+          fi
 
       - name: Terraform Init (Destroy)
         run: |
