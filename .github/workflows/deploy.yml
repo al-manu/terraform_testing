@@ -1,9 +1,9 @@
-name: Deploy to Dev environment
+name: Deploy to DEV environment
 
 on:
   push:
     branches:
-      - dev
+      - 'feature/*'  # Trigger on any push to a feature branch
 jobs:
   terraform:
     runs-on: ubuntu-latest
