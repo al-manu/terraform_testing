@@ -15,36 +15,22 @@ jobs:
       name: ${{ github.event.inputs.environment }}  # Dynamically use the input environment
 
     permissions:
-      id-token: write  # Required for OIDC authentication
-      contents: read   # Access to repository contents
+      id-token: write
+      contents: read
 
     env:
-      # Use explicit environment checks instead of format()
-      AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Default to SIT
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Terraform state bucket
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3  # Checkout the code
+        uses: actions/checkout@v3
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.9.8  # Set the Terraform version
+          terraform_version: 1.9.8
 
-      - name: Configure AWS credentials
-        id: aws_auth
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Default to SIT
-          aws-region: ${{ secrets.AWS_REGION }}  # Use AWS region
-        env:
-          AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Default to SIT
-          AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region
-          TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Terraform state bucket
-
-      # Dynamically select the correct role and terraform files based on input environment
       - name: Set environment-specific values
         run: |
           if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
@@ -61,28 +47,20 @@ jobs:
             echo "TF_VAR_TF_STATE_BUCKET=${{ secrets.DEV_TF_STATE_BUCKET }}" >> $GITHUB_ENV
           fi
 
+      - name: Configure AWS credentials
+        id: aws_auth
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+        env:
+          AWS_ROLE_ARN: ${{ env.AWS_ROLE_ARN }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+          TF_VAR_TF_STATE_BUCKET: ${{ env.TF_VAR_TF_STATE_BUCKET }}
+
       - name: Terraform Init (Destroy)
         run: |
-          set -e  # Exit on error
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/${{ github.event.inputs.environment }}.tfstate" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"  # Use AWS region dynamically
-
-      - name: Terraform Plan (Destruction)
-        run: |
-          set -e
-          terraform plan -destroy -out=tfplan -var-file=environments/${{ github.event.inputs.environment }}.tfvars  # Plan for the destruction
-          terraform show -no-color tfplan  # Show the plan for review
-
-      - name: Manual Approval for Destruction (Critical Environments Only)
-        if: ${{ github.event.inputs.environment == 'prod' }}  # Manual approval required for production
-        run: |
-          echo "Please manually approve the destruction for the prod environment."
-          exit 1  # Exit to wait for manual approval (you can handle manual approval in the GitHub environment settings)
-
-      - name: Terraform Destroy
-        run: |
-          set -e
-          terraform apply -auto-approve tfplan  # Apply the destruction plan (only after approval if prod)
-        if: ${{ github.event.inputs.environment != 'prod' }}  # Skip for prod if manual approval is required
+            -backend-config="region=${{
