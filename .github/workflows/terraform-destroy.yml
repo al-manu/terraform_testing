@@ -1,10 +1,10 @@
-name: Destroy Terraform Resources (SIT)
+name: Destroy Terraform Resources
 
 on:
-  workflow_dispatch:  # Manually trigger this workflow with an input for the environment
+  workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to destroy'
+        description: 'Specify the environment to destroy (e.g., sit, prod, dev)'
         required: true
         default: 'sit'
 
@@ -12,16 +12,17 @@ jobs:
   destroy:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.event.inputs.environment }}  # Dynamically use environment input
-      url: ${{ steps.deploy.outputs.url }}
-    
+      name: ${{ github.event.inputs.environment }}  # Dynamically use the input environment
+      url: ${{ steps.deploy.outputs.url }}  # Optional, if you want to set environment URL
+
     permissions:
       id-token: write  # Required for OIDC authentication
       contents: read  # Access to repository contents
 
     env:
-      AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # The ARN of the AWS role (for SIT environment)
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region (for SIT environment)
+      # Dynamically reference secrets based on the specified environment
+      AWS_ROLE_ARN: ${{ secrets['AWS_' + github.event.inputs.environment | upper + '_ROLE_ARN'] }}  # AWS Role for the environment
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region can be common for all environments
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for Terraform state
 
     steps:
@@ -37,35 +38,35 @@ jobs:
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Assume the SIT role
-          aws-region: ${{ secrets.AWS_REGION }}  # Use the AWS region
+          role-to-assume: ${{ secrets['AWS_' + github.event.inputs.environment | upper + '_ROLE_ARN'] }}  # Dynamically use the role ARN for the environment
+          aws-region: ${{ secrets.AWS_REGION }}  # Use the AWS region (you could set different regions for each environment if needed)
         env:
-          AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Environment variables for AWS role and region
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          AWS_ROLE_ARN: ${{ secrets['AWS_' + github.event.inputs.environment | upper + '_ROLE_ARN'] }}  # Set the environment's AWS role ARN
+          AWS_REGION: ${{ secrets.AWS_REGION }}  # Use common AWS region (adjust for each environment if needed)
+          TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Set the Terraform state bucket
 
       - name: Terraform Init (Destroy)
         run: |
           set -e  # Exit on error
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-            -backend-config="key=terraform/sit.tfstate" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"  # Set the AWS region
+            -backend-config="key=terraform/${{ github.event.inputs.environment }}.tfstate" \
+            -backend-config="region=${{ secrets.AWS_REGION }}"  # Use AWS region dynamically
 
       - name: Terraform Plan (Destruction)
         run: |
           set -e
-          terraform plan -destroy -out=tfplan -var-file=environments/sit.tfvars  # Generate destruction plan
+          terraform plan -destroy -out=tfplan -var-file=environments/${{ github.event.inputs.environment }}.tfvars  # Plan for the destruction, dynamically use environment-specific tfvars
           terraform show -no-color tfplan  # Show the plan for review
 
-      - name: Manual Approval (Destruction)
-        if: github.event.inputs.environment == 'prod'  # Manual approval required for production
+      - name: Manual Approval for Destruction (Critical Environments Only)
+        if: ${{ github.event.inputs.environment == 'prod' }}  # Manual approval required for production
         run: |
-          echo "Please manually approve the destruction for production."
-          exit 1  # Exit to wait for manual approval (this can be handled in GitHub environment settings)
+          echo "Please manually approve the destruction for the prod environment."
+          exit 1  # Exit to wait for manual approval (you can handle manual approval in the GitHub environment settings)
 
       - name: Terraform Destroy
         run: |
           set -e
-          terraform apply -auto-approve tfplan  # Apply the destruction plan
-        if: github.event.inputs.environment != 'prod'  # Skip for prod if manual approval is required
+          terraform apply -auto-approve tfplan  # Apply the destruction plan (only after approval if prod)
+        if: ${{ github.event.inputs.environment != 'prod' }}  # Skip for prod if manual approval is required
