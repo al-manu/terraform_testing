@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
-      contents: read 
-             
+      contents: read            
     environment:
         name: dev 
     env:
