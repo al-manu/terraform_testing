@@ -58,6 +58,8 @@ jobs:
         run: |
           terraform apply -auto-approve tfplan
 
+
+       #delete branch after merge   
       - name: Delete merged branch
         run: |
           git branch -d ${{ github.head_ref }}
