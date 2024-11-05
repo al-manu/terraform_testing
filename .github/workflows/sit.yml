@@ -2,7 +2,7 @@ name: Deploy to SIT environment
 
 on:
   pull_request:
-    types: [closed]  # Focus on PRs that are closed (merged or not)
+    types: [approved]  # Focus on PRs that are closed (merged or not)
     branches:
       - main
 
