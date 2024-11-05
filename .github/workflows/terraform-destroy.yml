@@ -1,12 +1,12 @@
-name: Terraform Destroy Specific
+name: Destroy Terraform Resources (SIT)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manually trigger this workflow with an input for the environment
     inputs:
       environment:
         description: 'Environment to destroy'
         required: true
-        default: 'dev'
+        default: 'sit'
 
 jobs:
   destroy:
@@ -15,33 +15,57 @@ jobs:
       name: ${{ github.event.inputs.environment }}  # Dynamically use environment input
       url: ${{ steps.deploy.outputs.url }}
     
+    permissions:
+      id-token: write  # Required for OIDC authentication
+      contents: read  # Access to repository contents
+
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # The ARN of the AWS role (for SIT environment)
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region (for SIT environment)
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for Terraform state
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3  # Checkout the code
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.9.8
+          terraform_version: 1.9.8  # Set the Terraform version
 
       - name: Configure AWS credentials
+        id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_SIT_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Assume the SIT role
+          aws-region: ${{ secrets.AWS_REGION }}  # Use the AWS region
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Environment variables for AWS role and region
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+
+      - name: Terraform Init (Destroy)
+        run: |
+          set -e  # Exit on error
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=terraform/sit.tfstate" \
+            -backend-config="region=${{ secrets.AWS_REGION }}"  # Set the AWS region
 
       - name: Terraform Plan (Destruction)
         run: |
-          terraform init
-          terraform plan -destroy -out=tfplan -var-file=environments/${{ github.event.inputs.environment }}.tfvars
-          terraform show -no-color tfplan
+          set -e
+          terraform plan -destroy -out=tfplan -var-file=environments/sit.tfvars  # Generate destruction plan
+          terraform show -no-color tfplan  # Show the plan for review
 
-      - name: Manual Approval for Destruction
-        if: github.event.inputs.environment == 'prod'  # For production, manual approval is required
+      - name: Manual Approval (Destruction)
+        if: github.event.inputs.environment == 'prod'  # Manual approval required for production
         run: |
-          echo "Please manually approve the destruction for prod."
+          echo "Please manually approve the destruction for production."
+          exit 1  # Exit to wait for manual approval (this can be handled in GitHub environment settings)
 
       - name: Terraform Destroy
-        if: github.event.inputs.environment != 'prod'  # Skip in prod if manual approval is required
         run: |
-          terraform apply -auto-approve tfplan
+          set -e
+          terraform apply -auto-approve tfplan  # Apply the destruction plan
+        if: github.event.inputs.environment != 'prod'  # Skip for prod if manual approval is required
