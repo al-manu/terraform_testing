@@ -2,7 +2,7 @@ name: Deploy to SIT
 
 on:
   pull_request:
-    types: [opened]  # Focus on review events
+    types: [closed]  # Focus on review events
     branches:
       - main
 
