@@ -11,6 +11,7 @@ jobs:
     permissions:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
+      actions: write
     environment:
       name: prod  # Correct environment name if needed
 
