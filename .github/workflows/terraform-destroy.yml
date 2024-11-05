@@ -22,8 +22,11 @@ jobs:
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Common state bucket for all environments
-      # Dynamically set AWS_ROLE_ARN based on the input environment
-      AWS_ROLE_ARN: ${{ secrets[format('AWS_{0}_ROLE_ARN', github.event.inputs.environment | upper)] }}  # Dynamic ARN for each environment
+      # Dynamically select AWS_ROLE_ARN based on environment input
+      AWS_ROLE_ARN: ${{ 
+        github.event.inputs.environment == 'prod' && secrets.AWS_PROD_ROLE_ARN ||
+        github.event.inputs.environment == 'sit' && secrets.AWS_SIT_ROLE_ARN ||
+        secrets.AWS_DEV_ROLE_ARN }} # Default to dev if no match
 
     steps:
       - name: Checkout code
