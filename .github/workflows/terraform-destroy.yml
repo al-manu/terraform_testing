@@ -20,10 +20,10 @@ jobs:
       contents: read  # Access to repository contents
 
     env:
-      # Dynamically reference secrets based on the specified environment
-      AWS_ROLE_ARN: ${{ secrets['AWS_' + github.event.inputs.environment | upper + '_ROLE_ARN'] }}  # AWS Role for the environment
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region can be common for all environments
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for Terraform state
+      # Dynamically reference secrets based on the specified environment using `format` for concatenation
+      AWS_ROLE_ARN: ${{ secrets[format('AWS_{0}_ROLE_ARN', github.event.inputs.environment | upper)] }}  # AWS Role for the environment
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Terraform state bucket
 
     steps:
       - name: Checkout code
@@ -38,11 +38,11 @@ jobs:
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets['AWS_' + github.event.inputs.environment | upper + '_ROLE_ARN'] }}  # Dynamically use the role ARN for the environment
-          aws-region: ${{ secrets.AWS_REGION }}  # Use the AWS region (you could set different regions for each environment if needed)
+          role-to-assume: ${{ secrets[format('AWS_{0}_ROLE_ARN', github.event.inputs.environment | upper)] }}  # Dynamically use the role ARN for the environment
+          aws-region: ${{ secrets.AWS_REGION }}  # Use AWS region (you can adjust for each environment if needed)
         env:
-          AWS_ROLE_ARN: ${{ secrets['AWS_' + github.event.inputs.environment | upper + '_ROLE_ARN'] }}  # Set the environment's AWS role ARN
-          AWS_REGION: ${{ secrets.AWS_REGION }}  # Use common AWS region (adjust for each environment if needed)
+          AWS_ROLE_ARN: ${{ secrets[format('AWS_{0}_ROLE_ARN', github.event.inputs.environment | upper)] }}  # Set the environment's AWS role ARN
+          AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region
           TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Set the Terraform state bucket
 
       - name: Terraform Init (Destroy)
@@ -56,7 +56,7 @@ jobs:
       - name: Terraform Plan (Destruction)
         run: |
           set -e
-          terraform plan -destroy -out=tfplan -var-file=environments/${{ github.event.inputs.environment }}.tfvars  # Plan for the destruction, dynamically use environment-specific tfvars
+          terraform plan -destroy -out=tfplan -var-file=environments/${{ github.event.inputs.environment }}.tfvars  # Plan for the destruction
           terraform show -no-color tfplan  # Show the plan for review
 
       - name: Manual Approval for Destruction (Critical Environments Only)
