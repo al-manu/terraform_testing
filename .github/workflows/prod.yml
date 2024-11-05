@@ -59,8 +59,10 @@ jobs:
           terraform apply -auto-approve tfplan
 
 
-       #delete branch after merge   
+      # Delete the source branch after merging the PR (for merged branches only)
       - name: Delete merged branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          git branch -d ${{ github.head_ref }}
-          git push origin --delete ${{ github.head_ref }}
+          merged_branch=$(git log -1 --pretty=%P | awk '{print $2}')
+          echo "Deleting merged branch: $merged_branch"
+          git push origin --delete $merged_branch
