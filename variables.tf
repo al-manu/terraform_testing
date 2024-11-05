@@ -2,11 +2,6 @@ variable "TF_STATE_BUCKET" {
   description = "The name of the S3 bucket for Terraform state"
   type        = string
 }
-# variable "aws_region" {
-#   description = "The AWS region for resources"
-#   type        = string
-# }
-
 variable "in_bucket_name" {
   description = "Name of the input S3 bucket"
   type        = string
@@ -30,7 +25,6 @@ variable "export_bucket_name" {
   type        = string
   default     = "test-export-oct2401"  # Change this as needed for your environment
 }
-
 
 variable "environment" {
   description = "The environment to deploy (dev, sit, prod)"
