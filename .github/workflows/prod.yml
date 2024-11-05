@@ -1,4 +1,4 @@
-name: Deploy to Prod environment
+name: Deploy to PROD environment
 
 on:
   push:
@@ -57,3 +57,8 @@ jobs:
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve tfplan
+
+      - name: Delete merged branch
+        run: |
+          git branch -d ${{ github.head_ref }}
+          git push origin --delete ${{ github.head_ref }}
