@@ -1,14 +1,14 @@
 name: Deploy to SIT
 
 on:
-  pull_request_review:
-    types: [submitted]  # Focus on review events
+  pull_request:
+    types: [opened]  # Focus on review events
     branches:
       - main
 
 jobs:
   deploy:
-    if: github.event.review.state == 'approved'  # Proceed only if approved
+    if: github.event.pull_request.merged == true  # Ensure the PR is merged
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
