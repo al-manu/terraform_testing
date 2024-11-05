@@ -1,4 +1,4 @@
-name: Destroy Terraform Resources (SIT)
+name: Destroy Terraform Resources (DEV ,SIT ,PROD)
 
 on:
   workflow_dispatch:  # Manually trigger this workflow with an input for the environment
@@ -49,13 +49,13 @@ jobs:
           set -e  # Exit on error
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-            -backend-config="key=terraform/sit.tfstate" \
+            -backend-config="key=terraform/dev.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"  # Set the AWS region
 
       - name: Terraform Plan (Destruction)
         run: |
           set -e
-          terraform plan -destroy -out=tfplan -var-file=environments/sit.tfvars  # Generate destruction plan
+          terraform plan -destroy -out=tfplan -var-file=environments/dev.tfvars  # Generate destruction plan
           terraform show -no-color tfplan  # Show the plan for review
 
       - name: Manual Approval (Destruction)
