@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-
 jobs:
   terraform:
     runs-on: ubuntu-latest
@@ -13,6 +12,8 @@ jobs:
       contents: read            
     environment:
         name: dev 
+
+        
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_PROD_ROLE_ARN }}  # Use the AWS role for production
       AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
