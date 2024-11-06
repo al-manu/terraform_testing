@@ -47,3 +47,14 @@ resource "aws_dynamodb_table" "terraform_lock_table" {
   }
 }
 
+
+# Create the S3 bucket for storing Terraform state
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "terraform-state"  # Specify your desired bucket name
+  # acl    = "private"          # Set ACL to private (or another based on your security model)
+
+  tags = {
+    Name        = "Terraform State Bucket"
+    Environment = var.environment
+  }
+}
