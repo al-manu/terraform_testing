@@ -45,8 +45,8 @@ jobs:
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/sit.tfstate" \
-            -backend-config="region=${{ secrets.AWS_REGION }}" \ # Use the secret for AWS region
-            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}"  # Dynamodb lock table
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}"
 
       - name: Terraform Validate
         run: |
