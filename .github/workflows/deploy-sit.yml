@@ -49,6 +49,12 @@ jobs:
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/sit.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"  # Use the secret for AWS region
+            
+      - name: Terraform Validate
+        run: |
+          set -e
+          terraform validate
+
 
       - name: Terraform Plan
         id: plan

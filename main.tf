@@ -1,11 +1,3 @@
-# fstate directory needed here please
-terraform {
-  backend "s3" {
-    bucket = "aa-terraform-state-bucket"
-    key    = "terraform/state.tfstate"
-  }
-}
-
 # --------------------------------------------------------------------------------------
 # Create S3 buckets 
 # --------------------------------------------------------------------------------------
