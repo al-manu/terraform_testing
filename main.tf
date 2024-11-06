@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "export_bucket" {
 
 # Create the S3 buckets dynamically based on environment
 resource "aws_s3_bucket" "state_bucket" {
-  bucket = "${var.TF_STATE_BUCKET}-${timestamp()}"
+bucket = "${var.TF_STATE_BUCKET}-${var.environment}-${replace(timestamp(), "[:]", "-")}"
 }
 
 # Create DynamoDB lock table for each environment
