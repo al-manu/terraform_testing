@@ -1,19 +1,19 @@
 
 # Create S3 buckets dynamically based on environment
 resource "aws_s3_bucket" "in_bucket" {
-  bucket = "in-bucket-${var.environment}"  # Unique bucket name for each environment
+  bucket = "in-bucket-${var.environment}-061124"  # Unique bucket name for each environment
 }
 
 resource "aws_s3_bucket" "out_bucket" {
-  bucket = "out-bucket-${var.environment}"
+  bucket = "out-bucket-${var.environment}-061124"
 }
 
 resource "aws_s3_bucket" "tmp_bucket" {
-  bucket = "tmp-bucket-${var.environment}"
+  bucket = "tmp-bucket-${var.environment}-061124"
 }
 
 resource "aws_s3_bucket" "export_bucket" {
-  bucket = "export-bucket-${var.environment}"
+  bucket = "export-bucket-${var.environment}-061124"
 }
 
 # Create the S3 buckets dynamically based on environment
