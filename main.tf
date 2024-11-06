@@ -22,19 +22,17 @@ resource "aws_s3_bucket" "export_bucket" {
   bucket = var.export_bucket_name  # Name of the export bucket
 }
 
-
 resource "aws_dynamodb_table" "terraform_lock_table" {
-  name         = "my-terraform-lock-table"   # Use your own name for the table
-  hash_key     = "LockID"                    # Required for Terraform state locking
-  billing_mode = "PAY_PER_REQUEST"           # You can use "PROVISIONED" if you prefer
-
+  count         = var.environment == "" ? 0 : 1
+  name          = "terraform-lock-${var.environment}"  # Unique table name for each environment
+  hash_key      = "LockID"
+  billing_mode  = "PAY_PER_REQUEST"
   attribute {
     name = "LockID"
-    type = "S"  # LockID must be a string
+    type = "S"
   }
-
   tags = {
-    "Environment" = "dev"
-    "Project"     = "terraform"
+    Environment = var.environment
+    Project     = "terraform"
   }
 }

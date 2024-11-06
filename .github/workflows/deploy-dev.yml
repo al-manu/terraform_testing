@@ -1,24 +1,25 @@
-name: Deploy to DEV environment
+name: Deploy to Environment
 
 on:
   push:
     branches:
       - 'feature/*'  # Trigger on any push to a feature branch
-      
+
 jobs:
   terraform:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
-      contents: read  
+      contents: read   # Required for checking out the code
 
     environment:
-        name: dev 
+      name: ${{ github.event.pull_request.head.ref }}  # Dynamically set the environment (dev, sit, prod)
+
     env:
-        AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
-        TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
-        TF_STATE_LOCK_TABLE: ${{ secrets.TF_STATE_LOCK_TABLE }}  # Reference to your DynamoDB table name secret
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+      TF_VAR_TF_STATE_LOCK_TABLE: terraform-lock-${{ github.event.pull_request.head.ref }}  # Dynamically use environment name
 
     steps:
       - name: Checkout code
@@ -29,65 +30,31 @@ jobs:
         with:
           terraform_version: 1.9.8
 
-      - name: Check Environment Variables
-        run: |
-          echo "AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}"
-          echo "AWS_REGION: ${{ secrets.AWS_REGION }}"
-          echo "TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}"
-          echo "TF_STATE_LOCK_TABLE: ${{ secrets.TF_STATE_LOCK_TABLE }}"
-
       - name: Configure AWS credentials
         id: aws_auth
-        uses: aws-actions/configure-aws-credentials@v3 
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Direct reference
-          aws-region: ${{ secrets.AWS_REGION }}  # Direct reference
-
-      - name: Terraform Format (Auto-fix)
-        run: |
-          set -e
-          terraform fmt -recursive  # Automatically format all files in the repository
-
-
-
-      # # Add step to create the DynamoDB table if it doesn't exist
-      # - name: Apply Terraform to create DynamoDB table (if missing)
-      #   run: |
-      #     set -e
-      #     terraform init
-      #     terraform plan
-      #     terraform apply -target=aws_dynamodb_table.terraform_lock_table -auto-approve  # Only create the DynamoDB table
-     
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Use the secret directly
+          aws-region: ${{ secrets.AWS_REGION }}  # Use the secret directly
 
       - name: Terraform Init
         run: |
           set -e
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-            -backend-config="key=terraform/dev.tfstate" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"\
-            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}"
+            -backend-config="key=terraform/${{ github.event.pull_request.head.ref }}/state.tfstate" \
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}"  # Use environment-specific lock table
 
-      
       - name: Terraform Validate
         run: |
           set -e
           terraform validate
-        
 
       - name: Terraform Plan
-        id: plan
         run: |
           set -e
-          terraform plan -out=tfplan -var-file=environments/dev.tfvars
-
-      - name: Check for Changes in Plan
-        run: |
-          set -e
-          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
-            echo "No changes to apply."
-            exit 0
-          fi
+          terraform plan -out=tfplan -var-file=environments/${{ github.event.pull_request.head.ref }}.tfvars  # Use environment-specific tfvars file
 
       - name: Terraform Apply
         run: |
