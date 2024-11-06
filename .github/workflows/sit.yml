@@ -1,14 +1,14 @@
 name: Deploy to SIT environment
 
 on:
-  pull_request:
-    types: [closed]  # Focus on PRs that are closed (merged or not)
-    branches:
-      - main
+  pull_request_review:
+    types: [submitted]  # Trigger when a review is submitted (approved, changes requested, or dismissed)
+    # branches:
+    #   - main
 
 jobs:
   deploy:
-    if: github.event.pull_request.merged == true  # Ensure the PR is merged
+    if: github.event.review.state == 'approved'  # Only proceed if the review was 'approved'
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
