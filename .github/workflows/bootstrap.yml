@@ -1,0 +1,43 @@
+name: Terraform CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*  # Any push to feature branches should also trigger this
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - closed
+
+jobs:
+  # Bootstrap stage: Create the backend resources (S3 and DynamoDB table)
+  bootstrap:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, sit, prod]  # Matrix allows parallel execution for each environment
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.9.8
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_SIT_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Initialize Terraform (Bootstrap)
+        run: |
+          cd terraform/bootstrap  # Move into the bootstrap directory
+          terraform init
+          terraform apply -var="environment=${{ matrix.environment }}" -auto-approve
