@@ -3,12 +3,12 @@ name: Deploy to SIT environment
 on:
   pull_request_review:
     types: [submitted]  # Trigger when a review is submitted (approved, changes requested, or dismissed)
-    # branches:
-    #   - main
 
 jobs:
   deploy:
-    if: github.event.review.state == 'approved'  # Only proceed if the review was 'approved'
+    # Only proceed if the review state is 'approved'
+    if: github.event.review.state == 'approved'  
+    
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC
@@ -22,7 +22,6 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # The S3 bucket for Terraform state
       TF_STATE_LOCK_TABLE: ${{ secrets.TF_STATE_LOCK_TABLE }}  # Reference to your DynamoDB table name secret
-
 
     steps:
       - name: Checkout code
@@ -39,10 +38,6 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Use the secret directly
           aws-region: ${{ secrets.AWS_REGION }}  # Use the secret directly
-        env:
-          AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # Set the AWS role ARN
-          AWS_REGION: ${{ secrets.AWS_REGION }}  # Set the AWS region
-          TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Terraform state bucket
 
       - name: Terraform Init
         run: |
@@ -51,19 +46,18 @@ jobs:
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/sit.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}" \ # Use the secret for AWS region
-            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}"
+            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}"  # Dynamodb lock table
 
       - name: Terraform Validate
         run: |
           set -e
-          terraform validate
-
+          terraform validate  # Ensure the configuration is valid
 
       - name: Terraform Plan
         id: plan
         run: |
           set -e
-          terraform plan -out=tfplan -var-file=environments/sit.tfvars
+          terraform plan -out=tfplan -var-file=environments/sit.tfvars  # Plan the changes for SIT environment
 
       - name: Check for Changes in Plan
         run: |
@@ -76,4 +70,4 @@ jobs:
       - name: Terraform Apply
         run: |
           set -e
-          terraform apply -auto-approve tfplan  # Apply the changes
+          terraform apply -auto-approve tfplan  # Apply the changes to SIT environment
