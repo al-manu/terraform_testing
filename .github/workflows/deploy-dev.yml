@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - 'feature/*'  # Trigger on any push to a feature branch
-  pull_request:
-    branches:
-      - 'main'  # Trigger on pull requests to main
 
 jobs:
   terraform:
