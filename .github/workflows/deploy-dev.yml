@@ -46,11 +46,6 @@ jobs:
           set -e
           terraform fmt -recursive  # Automatically format all files in the repository
 
-      - name: Terraform Validate
-        run: |
-          set -e
-          terraform validate
-
       - name: Terraform Init
         run: |
           set -e
@@ -59,7 +54,10 @@ jobs:
             -backend-config="key=terraform/dev.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"
       
-
+      - name: Terraform Validate
+        run: |
+          set -e
+          terraform validate
 
 
       - name: Terraform Plan
