@@ -22,3 +22,14 @@ variable "export_bucket_name" {
   description = "Name of the export S3 bucket"
   type        = string
 }
+
+
+variable "TF_STATE_BUCKET" {
+  description = "The S3 bucket to store Terraform state files"
+  type        = string
+}
+
+variable "TF_STATE_LOCK_TABLE" {
+  description = "The DynamoDB table used for state locking"
+  type        = string
+}

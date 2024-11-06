@@ -1,38 +1,40 @@
-# --------------------------------------------------------------------------------------
-# Create S3 buckets 
-# --------------------------------------------------------------------------------------
 
-# Create the input S3 bucket
+# Create S3 buckets dynamically based on environment
 resource "aws_s3_bucket" "in_bucket" {
-  bucket = var.in_bucket_name  # Name of the input bucket.
+  bucket = "in-bucket-${var.environment}"  # Unique bucket name for each environment
 }
 
-# Create the output S3 bucket
 resource "aws_s3_bucket" "out_bucket" {
-  bucket = var.out_bucket_name  # Name of the output bucket
+  bucket = "out-bucket-${var.environment}"
 }
 
-# Create the temporary S3 bucket
 resource "aws_s3_bucket" "tmp_bucket" {
-  bucket = var.tmp_bucket_name  # Name of the temporary bucket
+  bucket = "tmp-bucket-${var.environment}"
 }
 
-# Create the export S3 bucket
 resource "aws_s3_bucket" "export_bucket" {
-  bucket = var.export_bucket_name  # Name of the export bucket
+  bucket = "export-bucket-${var.environment}"
 }
 
+# Create the S3 buckets dynamically based on environment
+resource "aws_s3_bucket" "state_bucket" {
+  bucket = var.TF_STATE_BUCKET
+}
+# Create DynamoDB lock table for each environment
 resource "aws_dynamodb_table" "terraform_lock_table" {
   count         = var.environment == "" ? 0 : 1
   name          = "terraform-lock-${var.environment}"  # Unique table name for each environment
   hash_key      = "LockID"
   billing_mode  = "PAY_PER_REQUEST"
+
   attribute {
     name = "LockID"
     type = "S"
   }
+
   tags = {
     Environment = var.environment
     Project     = "terraform"
   }
 }
+
