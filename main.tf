@@ -22,7 +22,7 @@ resource "random_string" "unique_suffix" {
 }
 # Create the S3 buckets dynamically based on environment
 resource "aws_s3_bucket" "state_bucket" {
-  bucket = "${var.TF_STATE_BUCKET}-${var.environment}-${random_string.unique_suffix.result}"
+  bucket = "${var.TF_STATE_BUCKET}-${var.environment}"
 }
 
 # Create DynamoDB lock table for each environment
