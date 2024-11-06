@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "export_bucket" {
 
 # Create the S3 buckets dynamically based on environment
 resource "aws_s3_bucket" "state_bucket" {
-  bucket = var.TF_STATE_BUCKET
+  bucket = var.TF_STATE_BUCKET+"061124"
 }
 # Create DynamoDB lock table for each environment
 resource "aws_dynamodb_table" "terraform_lock_table" {
