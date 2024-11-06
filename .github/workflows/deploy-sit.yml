@@ -20,7 +20,7 @@ jobs:
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # The ARN of the AWS role
       AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # The S3 bucket for Terraform state
+      # TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # The S3 bucket for Terraform state
       TF_STATE_LOCK_TABLE: ${{ secrets.TF_STATE_LOCK_TABLE_SIT }}  # Reference the DEV DynamoDB table secret
 
     steps:
@@ -43,7 +43,7 @@ jobs:
         run: |
           set -e  # Exit on error
           terraform init \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            # -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/sit.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}" \
             -backend-config="dynamodb_table==${{ secrets.TF_STATE_LOCK_TABLE }}"
