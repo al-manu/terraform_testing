@@ -13,8 +13,8 @@
 # Backend configuration for each environment
 terraform {
   backend "s3" {
-    bucket         = "aa-terraform-state-bucket"
-    key            = "terraform/${var.environment}/state.tfstate"  # Environment-specific path
+    bucket         = "terraform-state"
+    key            = "terraform/${var.environment}/${var.environment}.tfstate"  # Environment-specific path
     # region         = "us-east-1"
     dynamodb_table = "terraform-lock-${var.environment}"  # Environment-specific DynamoDB table
   }
