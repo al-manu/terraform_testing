@@ -50,13 +50,13 @@ jobs:
 
 
 
-      # Add step to create the DynamoDB table if it doesn't exist
-      - name: Apply Terraform to create DynamoDB table (if missing)
-        run: |
-          set -e
-          terraform init
-          terraform plan
-          terraform apply -target=aws_dynamodb_table.terraform_lock_table -auto-approve  # Only create the DynamoDB table
+      # # Add step to create the DynamoDB table if it doesn't exist
+      # - name: Apply Terraform to create DynamoDB table (if missing)
+      #   run: |
+      #     set -e
+      #     terraform init
+      #     terraform plan
+      #     terraform apply -target=aws_dynamodb_table.terraform_lock_table -auto-approve  # Only create the DynamoDB table
      
 
       - name: Terraform Init
@@ -66,7 +66,7 @@ jobs:
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/dev.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"\
-            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}"
+            -backend-config="dynamodb_table="
 
       
       - name: Terraform Validate
