@@ -18,6 +18,7 @@ jobs:
         AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}
         AWS_REGION: ${{ secrets.AWS_REGION }}
         TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        TF_STATE_LOCK_TABLE: ${{ secrets.TF_STATE_LOCK_TABLE }}  # Reference to your DynamoDB table name secret
 
     steps:
       - name: Checkout code
@@ -33,6 +34,7 @@ jobs:
           echo "AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}"
           echo "AWS_REGION: ${{ secrets.AWS_REGION }}"
           echo "TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}"
+          echo "TF_STATE_LOCK_TABLE: ${{ secrets.TF_STATE_LOCK_TABLE }}"
 
       - name: Configure AWS credentials
         id: aws_auth
@@ -52,7 +54,9 @@ jobs:
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/dev.tfstate" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"
+            -backend-config="region=${{ secrets.AWS_REGION }}"\
+            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}"
+
       
       - name: Terraform Validate
         run: |
