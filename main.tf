@@ -15,15 +15,15 @@ resource "aws_s3_bucket" "tmp_bucket" {
 resource "aws_s3_bucket" "export_bucket" {
   bucket = "export-bucket-${var.environment}-061124"
 }
-resource "random_string" "unique_suffix" {
-  length  = 8
-  special = false
-  upper   = false
-}
-# Create the S3 buckets dynamically based on environment
-resource "aws_s3_bucket" "state_bucket" {
-  bucket = "${var.TF_STATE_BUCKET}-${var.environment}"
-}
+# resource "random_string" "unique_suffix" {
+#   length  = 8
+#   special = false
+#   upper   = false
+# }
+# # Create the S3 buckets dynamically based on environment
+# resource "aws_s3_bucket" "state_bucket" {
+#   bucket = "${var.TF_STATE_BUCKET}-${var.environment}"
+# }
 
 # Create DynamoDB lock table for each environment
 resource "aws_dynamodb_table" "terraform_lock_table" {
