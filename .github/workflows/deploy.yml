@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'feature/*'  # Trigger on any push to a feature branch
+      
 jobs:
   terraform:
     runs-on: ubuntu-latest
