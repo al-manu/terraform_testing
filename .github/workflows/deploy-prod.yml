@@ -42,6 +42,11 @@ jobs:
             -backend-config="key=terraform/prod.tfstate" \
             -backend-config="region=${{ env.AWS_REGION }}"
 
+      - name: Terraform Validate
+        run: |
+            set -e
+            terraform validate
+    
       - name: Terraform Plan
         id: plan
         run: |
@@ -57,7 +62,6 @@ jobs:
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve tfplan
-
 
       # # Automatically delete the merged branch using the peter-evans/delete-branch action
       # - name: Delete merged branch
