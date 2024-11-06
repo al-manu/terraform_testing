@@ -1,4 +1,4 @@
-# fstate directory needed
+# fstate directory needed here please
 terraform {
   backend "s3" {
     bucket = "aa-terraform-state-bucket"
