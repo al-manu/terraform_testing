@@ -48,6 +48,16 @@ jobs:
           set -e
           terraform fmt -recursive  # Automatically format all files in the repository
 
+
+          
+      # Add step to create the DynamoDB table if it doesn't exist
+      - name: Apply Terraform to create DynamoDB table (if missing)
+        run: |
+          set -e
+          terraform init
+          terraform apply -target=aws_dynamodb_table.terraform_lock_table -auto-approve  # Only create the DynamoDB table
+     
+
       - name: Terraform Init
         run: |
           set -e
@@ -63,13 +73,7 @@ jobs:
           set -e
           terraform validate
         
-        # Add step to create the DynamoDB table if it doesn't exist
-      - name: Apply Terraform to create DynamoDB table (if missing)
-        run: |
-          set -e
-          terraform init
-          terraform apply -target=aws_dynamodb_table.terraform_lock_table -auto-approve  # Only create the DynamoDB table
-     
+
       - name: Terraform Plan
         id: plan
         run: |
