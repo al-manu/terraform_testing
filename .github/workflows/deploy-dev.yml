@@ -62,7 +62,7 @@ jobs:
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
             -backend-config="key=terraform/dev.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}" \
-            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE_DEV }}"  # Use the DEV DynamoDB table for locking
+            -backend-config="dynamodb_table="  # Use the DEV DynamoDB table for locking
 
       # Validate the Terraform configuration (good practice before applying changes)
       - name: Terraform Validate
