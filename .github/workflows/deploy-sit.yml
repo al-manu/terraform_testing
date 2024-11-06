@@ -21,7 +21,7 @@ jobs:
       AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # The ARN of the AWS role
       AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # The S3 bucket for Terraform state
-      TF_STATE_LOCK_TABLE: ${{ secrets.TF_STATE_LOCK_TABLE }}  # Reference to your DynamoDB table name secret
+      TF_STATE_LOCK_TABLE: ${{ secrets.TF_STATE_LOCK_TABLE_SIT }}  # Reference the DEV DynamoDB table secret
 
     steps:
       - name: Checkout code
