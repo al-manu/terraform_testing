@@ -7,7 +7,7 @@ on:
 
 jobs:
   bootstrap:
-    uses: ./.github/workflows/bootstrap.yml@main  # Use the correct path to call the reusable workflow
+    uses: ./.github/workflows/bootstrap.yml  # Use the correct path to call the reusable workflow
     with:
       environment: dev  # Pass the environment (dev, prod, sit)
     secrets: inherit  # Inherit secrets from the calling workflow
