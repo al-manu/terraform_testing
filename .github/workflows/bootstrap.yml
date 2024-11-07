@@ -76,13 +76,13 @@ jobs:
 
           echo "State and lock buckets created or verified: $STATE_BUCKET_NAME, $LOCK_BUCKET_NAME"
 
-      # Step 4: Run Terraform to generate the state file
-      - name: Run Terraform to generate state file
-        run: |
-          echo "Running Terraform to generate the state file..."
+      # # Step 4: Run Terraform to generate the state file
+      # - name: Run Terraform to generate state file
+      #   run: |
+      #     echo "Running Terraform to generate the state file..."
           
-          terraform init  # Initialize Terraform configuration
-          terraform apply -auto-approve  # Apply the configuration (creates the state file)
+      #     terraform init  # Initialize Terraform configuration
+      #     terraform apply -auto-approve  # Apply the configuration (creates the state file)
 
       # Step 5: Upload Terraform state file to S3
       - name: Upload Terraform state file to S3
