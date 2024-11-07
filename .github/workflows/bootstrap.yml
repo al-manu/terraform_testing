@@ -3,7 +3,7 @@ name: Create AWS Resources (S3 Buckets)
 on:
   push:
     branches:
-      - 'feature/*'  # Adjust to your primary branch or trigger
+      - 'feature/*'  # Trigger on any push to a feature branch
 
 jobs:
   create-resources:
@@ -22,31 +22,35 @@ jobs:
         uses: actions/checkout@v3
 
       # Set up AWS credentials using OIDC authentication
-      - name: Set up AWS OIDC credentials for dev environment
+      - name: Set up AWS OIDC credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}  # Use the environment variable
           aws-region: ${{ env.AWS_REGION }}  # Use the environment variable
-          # role-session-name: github-actions-session
 
-      # Create S3 buckets for state and lock
+      # Create S3 buckets for Terraform state and lock
       - name: Create S3 buckets for Terraform state and lock
         run: |
-          # Define bucket names (you could use the GitHub SHA or any naming convention)
-          STATE_BUCKET_NAME="terraform-state-${{ github.sha }}"
-          LOCK_BUCKET_NAME="terraform-lock-${{ github.sha }}"
+          # Define project name and environment
+          PROJECT_NAME="DW_test"  # Replace with your project name
+          ENVIRONMENT="${{ github.event.inputs.environment }}"  # Can be dev, prod, etc.
+          REGION="${{ secrets.AWS_REGION }}"
+          
+          # Define bucket names using a standardized naming convention
+          STATE_BUCKET_NAME="${PROJECT_NAME}-terraform-state-${ENVIRONMENT}"
+          LOCK_BUCKET_NAME="${PROJECT_NAME}-terraform-lock-${ENVIRONMENT}"
 
           # Create the state bucket
-          aws s3api create-bucket --bucket $STATE_BUCKET_NAME --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION }}
+          aws s3api create-bucket --bucket $STATE_BUCKET_NAME --create-bucket-configuration LocationConstraint=$REGION
           
           # Create the lock bucket (optional, for state locking)
-          aws s3api create-bucket --bucket $LOCK_BUCKET_NAME --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION }}
+          aws s3api create-bucket --bucket $LOCK_BUCKET_NAME --create-bucket-configuration LocationConstraint=$REGION
 
           # Output bucket names (this can be used in subsequent workflows)
           echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
           echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
 
-          # Optionally, enable versioning (helpful for Terraform state)
+          # Optionally, enable versioning for the state and lock buckets
           aws s3api put-bucket-versioning --bucket $STATE_BUCKET_NAME --versioning-configuration Status=Enabled
           aws s3api put-bucket-versioning --bucket $LOCK_BUCKET_NAME --versioning-configuration Status=Enabled
 
