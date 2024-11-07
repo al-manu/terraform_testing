@@ -5,14 +5,12 @@
 
 # Create state bucket for the specific environment
 resource "aws_s3_bucket" "state_bucket" {
-  count  = length(data.aws_s3_bucket.state_bucket_check) == 0 ? 1 : 0
   bucket = "dw-test-state-${var.environment}"
   acl    = "private"
 }
 
 # Create lock bucket for the specific environment
 resource "aws_s3_bucket" "lock_bucket" {
-  count  = length(data.aws_s3_bucket.lock_bucket_check) == 0 ? 1 : 0
   bucket = "dw-test-lock-${var.environment}"
   acl    = "private"
 }
