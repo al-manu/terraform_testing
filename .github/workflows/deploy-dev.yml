@@ -11,6 +11,9 @@ jobs:
     with:
       environment: dev  # Pass the environment (dev, prod, etc.)
     secrets: inherit   # Inherit secrets to use in the bootstrap job
+    permissions:
+      id-token: write  # Required for OIDC role assumption
+      contents: read   # Required for checking out the code
 
   terraform:
     runs-on: ubuntu-latest
