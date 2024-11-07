@@ -6,87 +6,39 @@ on:
       - 'feature/*'  # Trigger on any push to a feature branch
 
 jobs:
-  call-bootstrap:
-  # Step 1: Call the Bootstrap Workflow to initialize the backend
-    uses: ./.github/workflows/bootstrap.yml  # Correctly reference the reusable workflow in the same repo
-    with:
-      environment: dev  # Pass the environment ('dev') as input
-
-  # Step 2: Deploy Resources to DEV
-  deploy:
-    needs: call-bootstrap  # Ensure that the bootstrap step runs first
+  bootstrap:
     runs-on: ubuntu-latest
-
     permissions:
-      id-token: write  # Required for OIDC role assumption
-      contents: read   # Required for checking out the code
+      id-token: write   # Required for OIDC authentication
+      contents: read    # Required for checking out the code
 
     environment:
-      name: dev  # Set the environment as 'dev'
+      name: dev  # Dynamic environment for DEV
 
     env:
-      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # AWS role ARN for DEV
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Role ARN for DEV
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS Region
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
-      TF_STATE_BUCKET_KEY: "terraform/dev/terraform_backend_config.tfstate"  # Key for state file
+      TF_STATE_BUCKET_KEY: "terraform/dev/terraform_backend_config.tfstate"  # Key for DEV state file
 
     steps:
-      # Checkout code from the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.9.8
 
-      # Configure AWS credentials via OIDC to assume the role
       - name: Configure AWS credentials
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Assume the provided AWS role ARN
-          aws-region: ${{ secrets.AWS_REGION }}  # Set the AWS region
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # Terraform Init (Initialize Terraform with backend config)
-      - name: Terraform Init
+      - name: Initialize Terraform Backend
         run: |
-          set -e
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET_DEV }}" \
-            -backend-config="key=${{ env.TF_STATE_BUCKET_KEY }}" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"  # Configure backend
-
-      # Terraform Validate
-      - name: Terraform Validate
-        run: |
-          set -e
-          terraform validate  # Validate Terraform configuration
-
-      # Terraform Plan
-      - name: Terraform Plan
-        id: plan
-        run: |
-          set -e
-          terraform plan -out=tfplan -var-file=environments/dev.tfvars  # Generate execution plan
-
-      # Check for Changes in Plan and skip apply if none
-      - name: Check for Changes in Plan
-        run: |
-          set -e
-          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
-            echo "No changes to apply."
-            exit 0  # Exit early if no changes
-          fi
-
-      # Terraform Apply
-      - name: Terraform Apply
-        run: |
-          set -e
-          terraform apply -auto-approve tfplan  # Apply the changes to infrastructure
-
-      # Cleanup Terraform workspace
-      - name: Cleanup Terraform workspace
-        run: |
-          terraform workspace select default || terraform workspace new default
+    
