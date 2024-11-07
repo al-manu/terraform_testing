@@ -12,7 +12,7 @@ jobs:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
     environment:
-      name: prod  # Adjust environment (prod, staging, etc.)
+      name: dev  # Adjust environment (prod, staging, etc.)
     
     env:
         AWS_ROLE_ARN: ${{ secrets.AWS_PROD_ROLE_ARN }}  # Use the AWS role for production
@@ -33,7 +33,7 @@ jobs:
         run: |
           # Define project name and environment
           PROJECT_NAME="DW_test"  # Replace with your project name
-          ENVIRONMENT="${{ github.event.inputs.environment }}"  # Can be dev, prod, etc.
+          ENVIRONMENT="dev"  # Can be dev, prod, etc.
           REGION="${{ secrets.AWS_REGION }}"
           
           # Define bucket names using a standardized naming convention
