@@ -7,13 +7,10 @@ on:
 
 jobs:
   call-bootstrap:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Call the bootstrap workflow to initialize the backend
-        uses: al-manu/terraform_testing/.github/workflows/bootstrap.yml@main  # Reference to the workflow
-        with:
-          environment: dev  # Pass the environment (dev, prod, sit)
-
+    uses: al-manu/terraform_testing/.github/workflows/bootstrap.yml@main  # Call the reusable workflow at the job level
+    with:
+      environment: dev  # Pass the environment (dev, prod, sit)
+  
   terraform:
     runs-on: ubuntu-latest
     permissions:
