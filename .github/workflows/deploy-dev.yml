@@ -6,20 +6,14 @@ on:
       - 'feature/*'  # Trigger on any push to a feature branch
 
 jobs:
+  # Call the reusable bootstrap workflow for setting up the environment and locking state
   bootstrap:
     uses: ./.github/workflows/bootstrap.yml  # Use the reusable workflow
     with:
       environment: dev  # Pass the environment (dev, prod, etc.)
-    env:  # Pass secrets as environment variables
-      AWS_DEV_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Pass the role ARN as an env variable
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # Pass the AWS region as an env variable
-      TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for state storage
     permissions:
       id-token: write  # Required for OIDC role assumption
       contents: read   # Required for checking out the code
-
-
-
 
   terraform:
     runs-on: ubuntu-latest
@@ -34,7 +28,7 @@ jobs:
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
       AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
+      TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Use the generic TF state bucket for this environment
 
     steps:
       # Checkout code from the repository
@@ -66,10 +60,10 @@ jobs:
         run: |
           set -e
           terraform init \
-            -backend-config="bucket=${{ env.TF_VAR_TF_STATE_BUCKET }}" \
-            -backend-config="key=terraform/dev/dev.tfstate" \
+            -backend-config="bucket=${{ env.TF_STATE_BUCKET }}" \
+            -backend-config="key=terraform/${{ job.environment }}/dev.tfstate" \
             -backend-config="region=${{ env.AWS_REGION }}" \
-            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" # Add DynamoDB table for locking (if desired)
+            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}"  # Add DynamoDB table for locking (if desired)
 
       # Terraform Validate
       - name: Terraform Validate

@@ -40,32 +40,37 @@
 # # }
 
 
-# Create an S3 bucket for storing the Terraform state
-resource "aws_s3_bucket" "state_bucket" {
-  bucket = var.tf_state_bucket
-  acl    = "private"  # ACL for secure access
+# # Create an S3 bucket for storing the Terraform state
+# resource "aws_s3_bucket" "state_bucket" {
+#   bucket = var.tf_state_bucket
+#   acl    = "private"  # ACL for secure access
 
-  versioning {
-    enabled = true  # Enable versioning for state locking
-  }
+#   versioning {
+#     enabled = true  # Enable versioning for state locking
+#   }
 
-  tags = {
-    Name        = "Terraform State"
-    Environment = var.environment  # Environment-specific tag (dev, prod, etc.)
-  }
-}
+#   tags = {
+#     Name        = "Terraform State"
+#     Environment = var.environment  # Environment-specific tag (dev, prod, etc.)
+#   }
+# }
 
-# Enable bucket versioning for handling concurrent writes (locking)
-resource "aws_s3_bucket_object_lock_configuration" "lock_configuration" {
-  bucket = aws_s3_bucket.state_bucket.bucket
+# # Enable bucket versioning for handling concurrent writes (locking)
+# resource "aws_s3_bucket_object_lock_configuration" "lock_configuration" {
+#   bucket = aws_s3_bucket.state_bucket.bucket
 
-  lock_configuration {
-    lock_enabled = "Enabled"
-    rule {
-      default_retention {
-        days = 365  # Optional: Retention policy, could be indefinite
-        mode = "COMPLIANCE"
-      }
-    }
-  }
-}
+#   lock_configuration {
+#     lock_enabled = "Enabled"
+#     rule {
+#       default_retention {
+#         days = 365  # Optional: Retention policy, could be indefinite
+#         mode = "COMPLIANCE"
+#       }
+#     }
+#   }
+# }
+
+# variable "environment" {
+#   description = "The environment to deploy to (dev, sit, prod)"
+#   type        = string
+# }
