@@ -13,7 +13,10 @@ jobs:
       contents: read   # Required for checking out the code
     environment:
       name: prod  # Adjust environment (prod, staging, etc.)
-
+    
+    env:
+        AWS_ROLE_ARN: ${{ secrets.AWS_PROD_ROLE_ARN }}  # Use the AWS role for production
+        AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -22,8 +25,8 @@ jobs:
       - name: Set up AWS OIDC credentials for dev environment
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # ARN of the role for dev environment
-          aws-region: ${{ secrets.AWS_REGION }}  # AWS region (e.g., us-east-1)
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}  # Use the environment variable
+          aws-region: ${{ env.AWS_REGION }}  # Use the environment variable
           # role-session-name: github-actions-session
 
       # Create S3 buckets for state and lock
