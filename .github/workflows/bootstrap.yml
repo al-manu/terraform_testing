@@ -8,6 +8,9 @@ on:
 jobs:
   create-resources:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read   # Required for checking out the code
     environment:
       name: prod  # Adjust environment (prod, staging, etc.)
 
