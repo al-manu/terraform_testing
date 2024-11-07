@@ -15,7 +15,7 @@ jobs:
       name: dev  # Adjust environment (prod, staging, etc.)
     
     env:
-        AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Use the AWS role for production
+        AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Use the AWS role for dev
         AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
     steps:
       - name: Checkout repository
@@ -35,26 +35,34 @@ jobs:
           PROJECT_NAME="dw-test"  # Replace with your project name
           ENVIRONMENT="dev"  # Can be dev, prod, etc.
           REGION="${{ secrets.AWS_REGION }}"
-          
-          # Define bucket names using a standardized naming convention
-          STATE_BUCKET_NAME="tfstate/${PROJECT_NAME}-state-${ENVIRONMENT}"
-          LOCK_BUCKET_NAME="tflock/${PROJECT_NAME}-lock-${ENVIRONMENT}"
 
+          # Define bucket names without slashes (valid S3 names)
+          STATE_BUCKET_NAME="${PROJECT_NAME}-state-${ENVIRONMENT}"
+          LOCK_BUCKET_NAME="${PROJECT_NAME}-lock-${ENVIRONMENT}"
 
-          echo "Creating S3 bucket with name: $STATE_BUCKET_NAME"
-          echo "Creating S3 bucket with name: $LOCK_BUCKET_NAME"
           # Create the state bucket
+          echo "Creating S3 bucket with name: $STATE_BUCKET_NAME"
           aws s3api create-bucket --bucket $STATE_BUCKET_NAME --create-bucket-configuration LocationConstraint=$REGION
-          
-          # Create the lock bucket (optional, for state locking)
+
+          # Create the lock bucket
+          echo "Creating S3 bucket with name: $LOCK_BUCKET_NAME"
           aws s3api create-bucket --bucket $LOCK_BUCKET_NAME --create-bucket-configuration LocationConstraint=$REGION
 
-          # Output bucket names (this can be used in subsequent workflows)
+          # Output bucket names for use in subsequent workflows
           echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
           echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
 
           # Optionally, enable versioning for the state and lock buckets
-          aws s3api put-bucket-versioning --bucket $STATE_BUCKET_NAME --versioning-configuration Status=Enabled
-          aws s3api put-bucket-versioning --bucket $LOCK_BUCKET_NAME --versioning-configuration Status=Enabled
+          aws s3api put-bucket-versioning --bucket "$STATE_BUCKET_NAME" --versioning-configuration Status=Enabled
+          aws s3api put-bucket-versioning --bucket "$LOCK_BUCKET_NAME" --versioning-configuration Status=Enabled
 
           echo "Created state and lock buckets: $STATE_BUCKET_NAME, $LOCK_BUCKET_NAME"
+
+          # Upload objects to simulated directories (using prefixes)
+          echo "Uploading Terraform state file to simulated 'tfsate' directory..."
+          aws s3 cp terraform-state-file.tf s3://"$STATE_BUCKET_NAME"/tfsate/terraform-state-file.tf
+
+          echo "Uploading Terraform lock file to simulated 'tflock' directory..."
+          aws s3 cp terraform-lock-file.tf s3://"$LOCK_BUCKET_NAME"/tflock/terraform-lock-file.tf
+
+          echo "Uploaded Terraform state and lock files to simulated directories: tfsate/ and tflock/"
