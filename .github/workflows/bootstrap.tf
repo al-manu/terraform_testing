@@ -34,3 +34,13 @@ variable "environment" {
   type        = string
   default     = "dev"  # Default to dev if not passed
 }
+
+# Check if the state bucket exists
+data "aws_s3_bucket" "state_bucket_check" {
+  bucket = "dw-test-state-dev"
+}
+
+# Check if the lock bucket exists
+data "aws_s3_bucket" "lock_bucket_check" {
+  bucket = "dw-test-lock-dev"
+}
