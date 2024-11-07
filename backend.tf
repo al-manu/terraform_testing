@@ -10,3 +10,8 @@ terraform {
     lock_table     = "terraform-lock-table"  # Use the S3 locking mechanism (no need for DynamoDB)
   }
 }
+
+variable "environment" {
+  description = "The environment for the backend (dev, sit, prod)"
+  type        = string
+}

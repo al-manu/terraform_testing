@@ -1,57 +1,48 @@
-name: Bootstrap Terraform Backend
+# name: Bootstrap Terraform Backend
 
-on:
-  workflow_call:
-    inputs:
-      environment:
-        description: 'The environment to bootstrap (dev, sit, prod)'
-        required: true
-        default: 'dev'
+# on:
+#   workflow_call:
+#     inputs:
+#       environment:
+#         description: 'The environment to bootstrap (dev, sit, prod)'
+#         required: true
+#         default: 'dev'  # Default environment
 
-jobs:
-  bootstrap:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write  # Required for OIDC role assumption
-      contents: read   # Required for checking out the code
+# jobs:
+#   bootstrap:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       id-token: write   # Required for OIDC authentication
+#       contents: read    # Required for checking out the code
 
-    environment:
-      name: ${{ inputs.environment }}  # Environment passed from the calling workflow
+#     environment:
+#       name: ${{ github.event.inputs.environment }}  # Dynamically select environment
 
-    env:
-      AWS_ROLE_ARN: ${{ secrets['AWS_' + inputs.environment | upper + '_ROLE_ARN'] }}  # This line should be fixed
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # Shared AWS region
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets['TF_STATE_BUCKET_' + inputs.environment | upper] }}  # Dynamic bucket per environment
-      TF_STATE_BUCKET_KEY: "terraform/${{ inputs.environment }}/terraform_backend_config.tfstate"  # State file key
+#     env:
+#       AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}
+#       AWS_REGION: ${{ secrets.AWS_REGION }}
+#       TF_VAR_TF_STATE_BUCKET: ${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}
+#       TF_STATE_BUCKET_KEY: "terraform/${{ github.event.inputs.environment }}/terraform_backend_config.tfstate"
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.9.8
+#       - name: Set up Terraform
+#         uses: hashicorp/setup-terraform@v2
+#         with:
+#           terraform_version: 1.9.8
 
-      - name: Configure AWS credentials
-        id: aws_auth
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ secrets['AWS_' + inputs.environment | upper + '_ROLE_ARN'] }}  # Directly access the secret
-          aws-region: ${{ secrets.AWS_REGION }}
+#       - name: Configure AWS credentials
+#         id: aws_auth
+#         uses: aws-actions/configure-aws-credentials@v3
+#         with:
+#           role-to-assume: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}
+#           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Initialize Terraform Backend
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ secrets['TF_STATE_BUCKET_' + inputs.environment | upper] }}" \
-            -backend-config="key=${{ env.TF_STATE_BUCKET_KEY }}" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"
-
-      - name: Check if Terraform State file exists
-        run: |
-          if aws s3 ls s3://${{ secrets['TF_STATE_BUCKET_' + inputs.environment | upper] }}/${{ env.TF_STATE_BUCKET_KEY }}; then
-            echo "State file already exists."
-          else
-            echo "State file does not exist. Creating initial infrastructure..."
-            terraform apply -auto-approve  # Apply initial setup
-          fi
+#       - name: Initialize Terraform Backend
+#         run: |
+#           terraform init \
+#             -backend-config="bucket=${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}" \
+#             -backend-config="key=${{ env.TF_STATE_BUCKET_KEY }}" \
+#             -backend-config="region=${{ secrets.AWS_REGION }}"
