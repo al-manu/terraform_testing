@@ -15,7 +15,7 @@ jobs:
       name: dev  # Adjust environment (prod, staging, etc.)
     
     env:
-        AWS_ROLE_ARN: ${{ secrets.AWS_PROD_ROLE_ARN }}  # Use the AWS role for production
+        AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Use the AWS role for production
         AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
     steps:
       - name: Checkout repository
