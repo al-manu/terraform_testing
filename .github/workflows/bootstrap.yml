@@ -22,7 +22,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Role ARN passed from secrets
-          aws-region: ${{ secrets.AWS_REGION }}  # AWS region passed from secrets
+          aws-region: 'eu-central-1'  # AWS region passed from secrets
           # audience: sts.amazonaws.com  # Audience for OIDC role assumption
 
       - name: Check if Lock File Exists in S3
