@@ -16,12 +16,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v1
+      # - name: Set up AWS credentials via OIDC
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     role-to-assume: arn:aws:iam::<aws-account-id>:role/<your-oidc-role>  # IAM Role ARN
+      #     role-session-name: GitHubActionsSession
+      #     aws-region: ${{ secrets.AWS_REGION }}
+            # Configure AWS credentials via OIDC to assume the role
+      - name: Configure AWS credentials
+        id: aws_auth
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::<aws-account-id>:role/<your-oidc-role>  # IAM Role ARN
-          role-session-name: GitHubActionsSession
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}  # Use the AWS_ROLE_ARN from env
+          aws-region: ${{ env.AWS_REGION }}  # Use the AWS region from env
 
       - name: Check if Lock File Exists in S3
         id: check_lock
