@@ -9,8 +9,8 @@ jobs:
   bootstrap:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # Required for OIDC authentication
-      contents: read    # Required for checking out the code
+      id-token: write  # Required for OIDC authentication
+      contents: read   # Required for checking out the code
 
     environment:
       name: dev  # Dynamic environment for DEV
@@ -19,7 +19,7 @@ jobs:
       AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Role ARN for DEV
       AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS Region
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
-      TF_STATE_BUCKET_KEY: "terraform/dev/terraform_backend_config.tfstate"  # Key for DEV state file
+      TF_STATE_BUCKET_KEY: "terraform/dev/terraform.tfstate"  # Dynamic Key (S3 path)
 
     steps:
       - name: Checkout code
@@ -41,4 +41,87 @@ jobs:
         run: |
           terraform init \
             -backend-config="bucket=${{ secrets.TF_STATE_BUCKET_DEV }}" \
-    
+            -backend-config="key=${{ env.TF_STATE_BUCKET_KEY }}" \
+            -backend-config="region=${{ secrets.AWS_REGION }}"
+
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC role assumption
+      contents: read   # Required for checking out the code
+
+    environment:
+      name: dev  # Set the environment as 'dev'
+
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # Set AWS region
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
+      TF_STATE_BUCKET_KEY: "terraform/dev/terraform.tfstate"  # Path to state file
+
+    steps:
+      # Checkout code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.9.8
+
+      # Configure AWS credentials via OIDC to assume the role
+      - name: Configure AWS credentials
+        id: aws_auth
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Terraform Format (Auto-fix)
+      - name: Terraform Format (Auto-fix)
+        run: |
+          set -e
+          terraform fmt -recursive
+
+      # Terraform Init (Backend setup)
+      - name: Terraform Init
+        run: |
+          set -e
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET_DEV }}" \
+            -backend-config="key=${{ env.TF_STATE_BUCKET_KEY }}" \
+            -backend-config="region=${{ secrets.AWS_REGION }}"
+
+      # Terraform Validate (Optional but good practice)
+      - name: Terraform Validate
+        run: |
+          set -e
+          terraform validate
+
+      # Terraform Plan
+      - name: Terraform Plan
+        id: plan
+        run: |
+          set -e
+          terraform plan -out=tfplan -var-file=environments/dev.tfvars
+
+      # Check if there are changes in the plan, and skip apply if none
+      - name: Check for Changes in Plan
+        run: |
+          set -e
+          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
+            echo "No changes to apply."
+            exit 0  # Exit early if no changes
+          fi
+
+      # Apply Terraform Plan (if changes exist)
+      - name: Terraform Apply
+        run: |
+          set -e
+          terraform apply -auto-approve tfplan
+
+      # Cleanup Terraform workspace
+      - name: Cleanup Terraform workspace
+        run: |
+          terraform workspace select default || terraform workspace new default
