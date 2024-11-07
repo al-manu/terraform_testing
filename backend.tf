@@ -11,24 +11,26 @@
 #   }
 # }
 
-terraform {
-  backend "s3" {
-    bucket = "your-terraform-state-bucket"
-    key    = "terraform/state/${terraform.workspace}.tfstate"   # Using workspace to separate dev, prod, sit states
-    # region = "us-west-2"
-    encrypt = true
-    acl    = "bucket-owner-full-control"
-    # Locking via Object Locking (optional but recommended for compliance mode)
-    object_locking = true
-  }
-}
+# terraform {
+#   backend "s3" {
+#     bucket = "your-terraform-state-bucket"
+#     key    = "terraform/state/${terraform.workspace}.tfstate"   # Using workspace to separate dev, prod, sit states
+#     # region = "us-west-2"
+#     encrypt = true
+#     acl    = "bucket-owner-full-control"
+#     # Locking via Object Locking (optional but recommended for compliance mode)
+#     object_locking = true
+#   }
+# }
 
-variable "environment" {
-  description = "The environment to deploy to (dev, sit, prod)"
-  type        = string
-}
+# variable "environment" {
+#   description = "The environment to deploy to (dev, sit, prod)"
+#   type        = string
+# }
 
-variable "aws_region" {
-  description = "The AWS region where the backend resources are stored"
-  type        = string
-}
+# variable "aws_region" {
+#   description = "The AWS region where the backend resources are stored"
+#   type        = string
+# }
+
+
