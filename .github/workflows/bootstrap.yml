@@ -16,11 +16,11 @@ jobs:
 
       # Set up AWS credentials using OIDC authentication
       - name: Set up AWS OIDC credentials for dev environment
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}  # ARN of the role for dev environment
-          aws-region: ${{ secrets.AWS_REGION_DEV }}  # AWS region (e.g., us-east-1)
-          role-session-name: github-actions-session
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # ARN of the role for dev environment
+          aws-region: ${{ secrets.AWS_REGION }}  # AWS region (e.g., us-east-1)
+          # role-session-name: github-actions-session
 
       # Create S3 buckets for state and lock
       - name: Create S3 buckets for Terraform state and lock
