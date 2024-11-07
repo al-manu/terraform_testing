@@ -8,45 +8,46 @@ on:
         required: true
         default: 'dev'
         type: string
+      aws_role_arn:
+        description: 'The AWS role ARN to assume for the environment'
+        required: true
+        type: string
 
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
+      id-token: write  # Required for OIDC role assumption
+      contents: read   # Required for checking out the code
 
     environment:
-      name: ${{ github.event.inputs.environment }}
-
-    env:
-      AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
+      name: ${{ inputs.environment }}  # Use the passed environment input
 
     steps:
+      # Step 1: Checkout code from the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.9.8
 
+      # Step 3: Configure AWS credentials via OIDC to assume the role
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ inputs.aws_role_arn }}  # Use the passed AWS_ROLE_ARN input
+          aws-region: ${{ secrets.AWS_REGION }}  # Set the AWS region from secrets
 
+      # Step 4: Initialize Terraform with backend config
       - name: Initialize Terraform Backend
         run: |
-          set -e
           terraform init \
-            -backend-config="bucket=${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}" \
-            -backend-config="key=terraform/${{ github.event.inputs.environment }}/terraform.tfstate" \
+            -backend-config="bucket=${{ secrets['TF_STATE_BUCKET_' + inputs.environment | upper ] }}" \
+            -backend-config="key=terraform/${{ inputs.environment }}/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"
 
-      - name: Apply Terraform Backend Resources
-        run: |
-          set -e
-          terraform apply -auto-approve
+      # Step 5: Further backend setup or resource creation (e.g., create S3, IAM, etc.)
+      # Add your logic to create backend resources for the environment here if needed
