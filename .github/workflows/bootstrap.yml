@@ -7,6 +7,18 @@ on:
         description: 'Environment name (dev, sit, prod)'
         required: true
         type: string
+      AWS_DEV_ROLE_ARN:
+        description: 'The ARN of the AWS role to assume'
+        required: true
+        type: string
+      AWS_REGION:
+        description: 'AWS region'
+        required: true
+        type: string
+      TF_STATE_BUCKET:
+        description: 'S3 bucket for Terraform state storage'
+        required: true
+        type: string
 
 jobs:
   setup:
@@ -21,14 +33,14 @@ jobs:
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Role ARN passed from secrets
-          aws-region: ${{ secrets.AWS_REGION }}  # AWS region passed from secrets
+          role-to-assume: ${{ inputs.AWS_DEV_ROLE_ARN }}  # Use the input passed from deploy-dev.yml
+          aws-region: ${{ inputs.AWS_REGION }}  # Use the input passed from deploy-dev.yml
           audience: sts.amazonaws.com  # Audience for OIDC role assumption
 
       - name: Check if Lock File Exists in S3
         id: check_lock
         run: |
-          aws s3api head-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock || echo "No lock file found"
+          aws s3api head-object --bucket ${{ inputs.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock || echo "No lock file found"
 
       - name: Fail if Lock Exists
         if: steps.check_lock.outcome == 'success'
@@ -38,13 +50,13 @@ jobs:
 
       - name: Create Lock File in S3
         run: |
-          aws s3api put-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
+          aws s3api put-object --bucket ${{ inputs.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
 
       - name: Initialize Terraform backend (dev, sit, prod)
         run: |
-          terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+          terraform init -backend-config="bucket=${{ inputs.TF_STATE_BUCKET }}" \
                          -backend-config="key=terraform/state/${{ github.event.inputs.environment }}.tfstate" \
-                         -backend-config="region=${{ secrets.AWS_REGION }}"
+                         -backend-config="region=${{ inputs.AWS_REGION }}"
 
       - name: Apply Terraform (Bootstrap)
         run: terraform apply -var-file=terraform_testing/environments/${{ github.event.inputs.environment }}.tfvars -auto-approve
@@ -52,4 +64,4 @@ jobs:
       - name: Remove Lock File from S3
         if: success()
         run: |
-          aws s3api delete-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
+          aws s3api delete-object --bucket ${{ inputs.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock

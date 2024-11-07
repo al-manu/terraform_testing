@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'feature/*'  # Trigger on any push to a feature branch
+
 jobs:
   bootstrap:
     uses: ./.github/workflows/bootstrap.yml  # Use the reusable workflow
@@ -16,6 +17,7 @@ jobs:
     permissions:
       id-token: write  # Required for OIDC role assumption
       contents: read   # Required for checking out the code
+
 
 
   terraform:
