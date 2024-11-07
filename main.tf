@@ -25,36 +25,16 @@ resource "aws_s3_bucket" "export_bucket" {
 #   bucket = "${var.TF_STATE_BUCKET}-${var.environment}"
 # }
 
-# Create DynamoDB lock table for each environment
-resource "aws_dynamodb_table" "terraform_lock_table" {
-  count         = var.environment == "" ? 0 : 1
-  name          = "terraform-lock-${var.environment}"  # Unique table name for each environment
-  hash_key      = "LockID"
-  billing_mode  = "PAY_PER_REQUEST"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = {
-    Environment = var.environment
-    Project     = "terraform"
-  }
-
-    lifecycle {
-    create_before_destroy = true  # Ensures table is created before anything else
-  }
-}
-
-
-# Create the S3 bucket for storing Terraform state
+# s3_backend.tf
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "terraform-state"  # Specify your desired bucket name
-  # acl    = "private"          # Set ACL to private (or another based on your security model)
+  bucket = "your-terraform-state-bucket"
+  region = "us-west-2"
 
-  tags = {
-    Name        = "Terraform State Bucket"
-    Environment = var.environment
+  versioning {
+    enabled = true
+  }
+
+  lifecycle {
+    prevent_destroy = true  # Prevent accidental deletion of the state bucket
   }
 }

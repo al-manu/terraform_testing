@@ -1,21 +1,12 @@
-# fstate directory needed here please
-# terraform {
-#   backend "s3" {
-#     bucket         = "aa-terraform-state-bucket"      # The name of your S3 bucket for state file
-#     key            = "terraform/dev.tfstate"          # The key (path) to store the state file
-#     encrypt        = true                              # Enable state file encryption in S3
-#     dynamodb_table = "my-terraform-lock-table"         # Name of the DynamoDB table used for state locking
-#     acl            = "bucket-owner-full-control"       # Set S3 ACL
-#   }
-# }
+# backend.tf: Configure S3 as the backend for both state storage and locking
 
-
-# Backend configuration for each environment
 terraform {
   backend "s3" {
-    bucket         = "terraform-state"
-    key            = "terraform/${var.environment}/${var.environment}.tfstate"  # Environment-specific path
-    # region         = "us-east-1"
-    dynamodb_table = "terraform-lock-${var.environment}"  # Environment-specific DynamoDB table
+    bucket         = var.tf_state_bucket  # S3 bucket to store state
+    key            = "terraform/${var.environment}/terraform.tfstate"  # State file path per environment
+    region         = var.aws_region  # AWS region where the bucket is located
+    encrypt        = true  # Enable encryption for the state file
+    acl            = "bucket-owner-full-control"  # Grant full control to the bucket owner
+    lock_table     = "terraform-lock-table"  # Use the S3 locking mechanism (no need for DynamoDB)
   }
 }
