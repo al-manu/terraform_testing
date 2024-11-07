@@ -11,51 +11,40 @@ on:
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write  # Required for OIDC authentication
-      contents: read   # Required for checking out the code
-
     environment:
-      name: ${{ github.event.inputs.environment }}  # Dynamic environment from the input
-    
+      name: ${{ github.event.inputs.environment }}  # Dynamically set environment
+
     env:
-      AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Correct secret reference
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS Region, shared across all environments
+      AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Role ARN based on environment
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # Region for all environments
       TF_VAR_TF_STATE_BUCKET: ${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}  # S3 bucket per environment
       TF_STATE_BUCKET_KEY: "terraform/${{ github.event.inputs.environment }}/terraform_backend_config.tfstate"  # Key per environment
 
     steps:
-      # Step 1: Checkout code from the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.9.8
 
-      # Step 3: Configure AWS credentials via OIDC to assume the role
       - name: Configure AWS credentials
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Assume the role for the given environment
-          aws-region: ${{ secrets.AWS_REGION }}  # Set the AWS region
+          role-to-assume: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # Step 4: Initialize Terraform with backend config
       - name: Initialize Terraform Backend
         run: |
-          set -e
           terraform init \
             -backend-config="bucket=${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}" \
             -backend-config="key=${{ env.TF_STATE_BUCKET_KEY }}" \
             -backend-config="region=${{ secrets.AWS_REGION }}"
       
-      # Step 5: Check if the backend state file exists
       - name: Check if Terraform State file exists
         run: |
-          set -e
           if aws s3 ls s3://${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}/${{ env.TF_STATE_BUCKET_KEY }}; then
             echo "State file already exists."
           else
