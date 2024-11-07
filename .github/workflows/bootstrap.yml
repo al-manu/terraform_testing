@@ -8,7 +8,8 @@ on:
 jobs:
   create-resources:
     runs-on: ubuntu-latest
-
+    environment:
+      name: prod 
     # Configure AWS Credentials using OIDC for authentication
     steps:
       - name: Checkout repository
