@@ -83,7 +83,7 @@ jobs:
           STATE_FILE="terraform.tfstate"  # Default Terraform state file name
           if [ -f "$STATE_FILE" ]; then
             echo "Uploading Terraform state file to simulated 'tfsate' directory..."
-            aws s3 cp "$STATE_FILE" s3://"$STATE_BUCKET_NAME"/tfsate/terraform-state-file.tf
+            aws s3 cp "$STATE_FILE" s3://"$STATE_BUCKET_NAME"/tfsate/"$STATE_BUCKET_NAME".tf
           else
             echo "Terraform state file not found, skipping upload."
           fi
@@ -94,7 +94,7 @@ jobs:
           LOCK_FILE="terraform.lock.hcl"  # Terraform lock file
           if [ -f "$LOCK_FILE" ]; then
             echo "Uploading Terraform lock file to simulated 'tflock' directory..."
-            aws s3 cp "$LOCK_FILE" s3://"$LOCK_BUCKET_NAME"/tflock/terraform-lock-file.hcl
+            aws s3 cp "$LOCK_FILE" s3://"$LOCK_BUCKET_NAME"/tflock/"$LOCK_BUCKET_NAME".hcl
           else
             echo "Terraform lock file not found, skipping upload."
           fi
