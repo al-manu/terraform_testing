@@ -3,7 +3,8 @@ name: Deploy to DEV environment
 on:
   push:
     branches:
-      - 'feature/*'  # Trigger on any push to a feature branch  ff
+      # - 'feature/*'  # Trigger on any push to a feature branch  ff
+      - main
 
 jobs:
   # Call the reusable bootstrap workflow for setting up the environment and locking state
