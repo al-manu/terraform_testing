@@ -7,10 +7,10 @@ on:
 
 jobs:
   bootstrap:
-    uses: ./.github/workflows/bootstrap.yml  # Use the local reusable workflow
+    uses: ./.github/workflows/bootstrap.yml  # Use the reusable workflow
     with:
-      environment: dev  # Pass the environment (dev, prod, sit)
-      aws_role_arn: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Pass the specific secret directly
+      environment: dev  # Pass the environment (dev, prod, etc.)
+    secrets: inherit   # Inherit secrets to use in the bootstrap job
 
   terraform:
     runs-on: ubuntu-latest
@@ -20,12 +20,12 @@ jobs:
 
     environment:
       name: dev  # Set the environment as 'dev'
-
+    
+    # Use `env` to pass secrets into the Terraform job
     env:
-      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Explicitly set the secret for the DEV environment
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # Set AWS region
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
-      TF_STATE_BUCKET_KEY: "terraform/dev/terraform.tfstate"  # Path to state file
 
     steps:
       # Checkout code from the repository
@@ -40,10 +40,11 @@ jobs:
 
       # Configure AWS credentials via OIDC to assume the role
       - name: Configure AWS credentials
+        id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}  # Use the AWS_ROLE_ARN from env
+          aws-region: ${{ env.AWS_REGION }}  # Use the AWS region from env
 
       # Terraform Format (Auto-fix)
       - name: Terraform Format (Auto-fix)
@@ -56,9 +57,9 @@ jobs:
         run: |
           set -e
           terraform init \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET_DEV }}" \
-            -backend-config="key=terraform/dev/terraform.tfstate" \
-            -backend-config="region=${{ secrets.AWS_REGION }}"
+            -backend-config="bucket=${{ env.TF_VAR_TF_STATE_BUCKET }}" \
+            -backend-config="key=terraform/dev/dev.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
 
       # Terraform Validate
       - name: Terraform Validate
@@ -73,8 +74,22 @@ jobs:
           set -e
           terraform plan -out=tfplan -var-file=environments/dev.tfvars
 
-      # Apply Terraform Plan
+      # Check for Changes in Plan and skip apply if none
+      - name: Check for Changes in Plan
+        run: |
+          set -e
+          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
+            echo "No changes to apply."
+            exit 0
+          fi
+
+      # Terraform Apply
       - name: Terraform Apply
         run: |
           set -e
           terraform apply -auto-approve tfplan
+
+      # Cleanup Terraform workspace
+      - name: Cleanup Terraform workspace
+        run: |
+          terraform workspace select default || terraform workspace new default
