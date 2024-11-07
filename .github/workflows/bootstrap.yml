@@ -42,10 +42,8 @@ jobs:
           create_bucket_if_needed() {
             local BUCKET_NAME=$1
             echo "Checking if the bucket $BUCKET_NAME exists..."
-            BUCKET_EXISTS=$(aws s3api head-bucket --bucket "$BUCKET_NAME" --region "$REGION" 2>&1 || true)
-            
-            # If the bucket does not exist, create it
-            if [[ "$BUCKET_EXISTS" == *"NotFound"* ]]; then
+            # Use 'aws s3 ls' to check if the bucket exists
+            if aws s3 ls "s3://$BUCKET_NAME" --region "$REGION" 2>&1 | grep -q 'NoSuchBucket'; then
               echo "Bucket $BUCKET_NAME does not exist. Creating it..."
               aws s3api create-bucket --bucket "$BUCKET_NAME" --create-bucket-configuration LocationConstraint=$REGION
             else
@@ -61,7 +59,7 @@ jobs:
           create_bucket_if_needed "$STATE_BUCKET_NAME"
           create_bucket_if_needed "$LOCK_BUCKET_NAME"
 
-          # Add a short delay to ensure bucket is fully registered (in case of eventual consistency)
+          # Add a short delay to ensure bucket is fully available (in case of eventual consistency)
           echo "Waiting for the buckets to be fully available..."
           sleep 10  # Wait for 10 seconds to ensure AWS propagates the bucket status
 
