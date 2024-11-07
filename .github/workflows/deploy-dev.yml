@@ -5,6 +5,13 @@ on:
     branches:
       - 'feature/*'  # Trigger on any push to a feature branch
 
+name: Deploy to DEV environment
+
+on:
+  push:
+    branches:
+      - 'feature/*'  # Trigger on any push to a feature branch
+
 jobs:
   bootstrap:
     uses: ./.github/workflows/bootstrap.yml  # Use the reusable workflow
