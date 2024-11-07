@@ -23,11 +23,12 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Pass the AWS_ROLE_ARN from secrets
           aws-region: ${{ secrets.AWS_REGION }}  # Pass the AWS region from secrets
+          audience: sts.amazonaws.com  # Required audience for OIDC role assumption
 
       - name: Check if Lock File Exists in S3
         id: check_lock
         run: |
-          aws s3api head-object --bucket ${{ secrets.STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock || echo "No lock file found"
+          aws s3api head-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock || echo "No lock file found"
 
       - name: Fail if Lock Exists
         if: steps.check_lock.outcome == 'success'
@@ -37,11 +38,11 @@ jobs:
 
       - name: Create Lock File in S3
         run: |
-          aws s3api put-object --bucket ${{ secrets.STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
+          aws s3api put-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
 
       - name: Initialize Terraform backend (dev, sit, prod)
         run: |
-          terraform init -backend-config="bucket=${{ secrets.STATE_BUCKET }}" \
+          terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
                          -backend-config="key=terraform/state/${{ github.event.inputs.environment }}.tfstate" \
                          -backend-config="region=${{ secrets.AWS_REGION }}"
 
@@ -51,4 +52,4 @@ jobs:
       - name: Remove Lock File from S3
         if: success()
         run: |
-          aws s3api delete-object --bucket ${{ secrets.STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
+          aws s3api delete-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
