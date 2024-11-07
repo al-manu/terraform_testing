@@ -1,55 +1,46 @@
-name: Bootstrap Terraform State and Lock
+name: Create AWS Resources (S3 Buckets)
 
 on:
-  workflow_call:  # Allows manual triggering
-    inputs:
-      environment:
-        description: 'Environment name (dev, sit, prod)'
-        required: true
-        type: string
+  push:
+    branches:
+      - 'feature/*'  # Adjust to your primary branch or trigger
 
 jobs:
-  setup:
+  create-resources:
     runs-on: ubuntu-latest
 
+    # Configure AWS Credentials using OIDC for authentication
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      # Set up AWS credentials via OIDC
-      - name: Configure AWS credentials
-        id: aws_auth
-        uses: aws-actions/configure-aws-credentials@v3
+      # Set up AWS credentials using OIDC authentication
+      - name: Set up AWS OIDC credentials for dev environment
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Use the secret directly
-          aws-region: ${{ secrets.AWS_REGION }}  # Use the secret directly
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}  # ARN of the role for dev environment
+          aws-region: ${{ secrets.AWS_REGION_DEV }}  # AWS region (e.g., us-east-1)
+          role-session-name: github-actions-session
 
-
-      - name: Check if Lock File Exists in S3
-        id: check_lock
+      # Create S3 buckets for state and lock
+      - name: Create S3 buckets for Terraform state and lock
         run: |
-          aws s3api head-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock || echo "No lock file found"
+          # Define bucket names (you could use the GitHub SHA or any naming convention)
+          STATE_BUCKET_NAME="terraform-state-${{ github.sha }}"
+          LOCK_BUCKET_NAME="terraform-lock-${{ github.sha }}"
 
-      - name: Fail if Lock Exists
-        if: steps.check_lock.outcome == 'success'
-        run: |
-          echo "Terraform lock is in place. Exiting."
-          exit 1  # Fail the job if lock file exists
+          # Create the state bucket
+          aws s3api create-bucket --bucket $STATE_BUCKET_NAME --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION_DEV }}
+          
+          # Create the lock bucket (optional, for state locking)
+          aws s3api create-bucket --bucket $LOCK_BUCKET_NAME --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION_DEV }}
 
-      - name: Create Lock File in S3
-        run: |
-          aws s3api put-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
+          # Output bucket names (this can be used in subsequent workflows)
+          echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
+          echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
 
-      - name: Initialize Terraform backend (dev, sit, prod)
-        run: |
-          terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-                         -backend-config="key=terraform/state/${{ github.event.inputs.environment }}.tfstate" \
-                         -backend-config="region=${{ secrets.AWS_REGION }}"
+          # Optionally, enable versioning (helpful for Terraform state)
+          aws s3api put-bucket-versioning --bucket $STATE_BUCKET_NAME --versioning-configuration Status=Enabled
+          aws s3api put-bucket-versioning --bucket $LOCK_BUCKET_NAME --versioning-configuration Status=Enabled
 
-      - name: Apply Terraform (Bootstrap)
-        run: terraform apply -var-file=terraform_testing/environments/${{ github.event.inputs.environment }}.tfvars -auto-approve
-
-      - name: Remove Lock File from S3
-        if: success()
-        run: |
-          aws s3api delete-object --bucket ${{ secrets.TF_STATE_BUCKET }} --key terraform/lock/${{ github.event.inputs.environment }}.lock
+          echo "Created state and lock buckets: $STATE_BUCKET_NAME, $LOCK_BUCKET_NAME"
