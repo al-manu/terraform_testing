@@ -22,3 +22,13 @@ terraform {
     object_locking = true
   }
 }
+
+variable "environment" {
+  description = "The environment to deploy to (dev, sit, prod)"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "The AWS region where the backend resources are stored"
+  type        = string
+}
