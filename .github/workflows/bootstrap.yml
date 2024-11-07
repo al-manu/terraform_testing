@@ -1,9 +1,9 @@
-name: Create and Manage AWS Resources (S3 Buckets)
+name: Bootstrap AWS Resources (State and Lock S3 Buckets)
 
 on:
   push:
     branches:
-      - 'feature/*'  # Trigger on any push to a feature branch
+      - 'feature/*'  # Trigger on push to any feature branch
 
 jobs:
   create-resources:
@@ -12,11 +12,12 @@ jobs:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
     environment:
-      name: dev  # Adjust environment (prod, staging, etc.)
-    
+      name: dev  # This can be dynamically set based on your environment
+
     env:
-      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # AWS role for dev
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region from secrets
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # The role ARN for assuming the dev role
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region from secrets
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -27,73 +28,25 @@ jobs:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Create S3 buckets for Terraform state and lock
+      - name: Initialize Terraform and create S3 buckets for state and lock
         run: |
-          # Define project name and environment dynamically
-          PROJECT_NAME="dw-test"
-          ENVIRONMENT="dev"  # This can be passed dynamically as an input
-          REGION="${{ secrets.AWS_REGION }}"
-          
-          # Define bucket names dynamically
-          STATE_BUCKET_NAME="${PROJECT_NAME}-state-${ENVIRONMENT}"
-          LOCK_BUCKET_NAME="${PROJECT_NAME}-lock-${ENVIRONMENT}"
+          # Set environment-specific variables
+          ENVIRONMENT="dev"  # Adjust dynamically based on your environment setup
+          AWS_REGION="${{ secrets.AWS_REGION }}"
 
-          # Check and create state bucket if it doesn't exist
-          BUCKET_EXISTS=$(aws s3api head-bucket --bucket "$STATE_BUCKET_NAME" --region "$REGION" 2>&1 || true)
-          if [[ "$BUCKET_EXISTS" == *"NotFound"* ]]; then
-            echo "Creating state bucket: $STATE_BUCKET_NAME"
-            aws s3api create-bucket --bucket "$STATE_BUCKET_NAME" --create-bucket-configuration LocationConstraint=$REGION
-          else
-            echo "State bucket $STATE_BUCKET_NAME already exists. Skipping creation."
-          fi
+          # Initialize Terraform
+          terraform init
 
-          # Check and create lock bucket if it doesn't exist
-          BUCKET_EXISTS=$(aws s3api head-bucket --bucket "$LOCK_BUCKET_NAME" --region "$REGION" 2>&1 || true)
-          if [[ "$BUCKET_EXISTS" == *"NotFound"* ]]; then
-            echo "Creating lock bucket: $LOCK_BUCKET_NAME"
-            aws s3api create-bucket --bucket "$LOCK_BUCKET_NAME" --create-bucket-configuration LocationConstraint=$REGION
-          else
-            echo "Lock bucket $LOCK_BUCKET_NAME already exists. Skipping creation."
-          fi
+          # Apply Terraform to create the S3 state and lock buckets
+          terraform apply -auto-approve -var "aws_region=${AWS_REGION}" -var "environment=${ENVIRONMENT}"
 
-          # Output bucket names for use in the workflow
+          # Output the created resources
+          STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
+          LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
+
+          echo "State bucket: $STATE_BUCKET_NAME"
+          echo "Lock bucket: $LOCK_BUCKET_NAME"
+
+          # Set the bucket names in the GitHub environment so they can be used later
           echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
           echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
-
-          # Optionally enable versioning for state and lock buckets
-          aws s3api put-bucket-versioning --bucket "$STATE_BUCKET_NAME" --versioning-configuration Status=Enabled
-          aws s3api put-bucket-versioning --bucket "$LOCK_BUCKET_NAME" --versioning-configuration Status=Enabled
-
-          echo "Created state and lock buckets: $STATE_BUCKET_NAME, $LOCK_BUCKET_NAME"
-
-      - name: Initialize and Apply Terraform
-        run: |
-          # Initialize Terraform with dynamic backend configuration
-          terraform init \
-            -backend-config="bucket=${{ env.state_bucket }}" \
-            -backend-config="key=terraform/state/${PROJECT_NAME}-${ENVIRONMENT}.tfstate" \
-            -backend-config="region=${{ secrets.AWS_REGION }}" \
-            -backend-config="dynamodb_table=${{ env.lock_bucket }}"  # Locking with DynamoDB table (optional)
-          
-          # Apply Terraform configuration
-          terraform apply -auto-approve
-
-      - name: Upload Terraform State and Lock File to S3
-        run: |
-          # Upload state file to the correct S3 path
-          STATE_FILE="terraform.tfstate"
-          if [ -f "$STATE_FILE" ]; then
-            echo "Uploading Terraform state file..."
-            aws s3 cp "$STATE_FILE" s3://"$STATE_BUCKET_NAME"/tfsate/"$PROJECT_NAME"-${ENVIRONMENT}.tfstate
-          else
-            echo "Terraform state file not found, skipping upload."
-          fi
-
-          # Similarly, upload lock file if needed
-          LOCK_FILE="terraform.lock.hcl"
-          if [ -f "$LOCK_FILE" ]; then
-            echo "Uploading Terraform lock file..."
-            aws s3 cp "$LOCK_FILE" s3://"$LOCK_BUCKET_NAME"/tflock/"$PROJECT_NAME"-${ENVIRONMENT}.hcl
-          else
-            echo "Terraform lock file not found, skipping upload."
-          fi
