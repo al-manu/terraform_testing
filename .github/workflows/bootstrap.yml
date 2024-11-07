@@ -33,7 +33,7 @@ jobs:
         run: |
           # Define project name and environment
           PROJECT_NAME="DW_test"  # Replace with your project name
-          ENVIRONMENT="${{ github.event.inputs.environment }}"  # Can be dev, prod, etc.
+          ENVIRONMENT="dev"  # Can be dev, prod, etc.
           REGION="${{ secrets.AWS_REGION }}"
           
           # Define bucket names using a standardized naming convention
