@@ -58,11 +58,27 @@ jobs:
 
           echo "Created state and lock buckets: $STATE_BUCKET_NAME, $LOCK_BUCKET_NAME"
 
-          # Upload objects to simulated directories (using prefixes)
-          echo "Uploading Terraform state file to simulated 'tfsate' directory..."
-          aws s3 cp terraform-state-file.tf s3://"$STATE_BUCKET_NAME"/tfsate/terraform-state-file.tf
+          # Generate the Terraform state file (this can be a Terraform init and apply)
+          echo "Running Terraform to generate state file..."
+          terraform init  # Initialize Terraform
+          terraform apply -auto-approve  # Apply Terraform configuration (creates state file)
 
-          echo "Uploading Terraform lock file to simulated 'tflock' directory..."
-          aws s3 cp terraform-lock-file.tf s3://"$LOCK_BUCKET_NAME"/tflock/terraform-lock-file.tf
+          # Check if the state file exists before uploading
+          STATE_FILE="terraform.tfstate"  # This is the default Terraform state file name
+          if [ -f "$STATE_FILE" ]; then
+            echo "Uploading Terraform state file to simulated 'tfsate' directory..."
+            aws s3 cp "$STATE_FILE" s3://"$STATE_BUCKET_NAME"/tfsate/terraform-state-file.tf
+          else
+            echo "Terraform state file not found, skipping upload."
+          fi
 
-          echo "Uploaded Terraform state and lock files to simulated directories: tfsate/ and tflock/"
+          # Similarly, you can upload the Terraform lock file if it exists
+          LOCK_FILE="terraform.lock.hcl"  # Terraform lock file
+          if [ -f "$LOCK_FILE" ]; then
+            echo "Uploading Terraform lock file to simulated 'tflock' directory..."
+            aws s3 cp "$LOCK_FILE" s3://"$LOCK_BUCKET_NAME"/tflock/terraform-lock-file.hcl
+          else
+            echo "Terraform lock file not found, skipping upload."
+          fi
+
+          echo "Terraform state and lock files uploaded successfully."
