@@ -74,10 +74,10 @@ jobs:
 
           echo "Created state and lock buckets: $STATE_BUCKET_NAME, $LOCK_BUCKET_NAME"
 
-          # # Run Terraform to generate the state file
-          # echo "Running Terraform to generate state file..."
-          # terraform init  # Initialize Terraform
-          # terraform apply -auto-approve  # Apply Terraform configuration (creates state file)
+          # Run Terraform to generate the state file
+          echo "Running Terraform to generate state file..."
+          terraform init  # Initialize Terraform
+          terraform apply -auto-approve  # Apply Terraform configuration (creates state file)
 
           # Check if the state file exists before uploading
           STATE_FILE="terraform.tfstate"  # Default Terraform state file name
