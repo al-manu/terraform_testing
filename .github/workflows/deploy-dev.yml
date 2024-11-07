@@ -6,14 +6,11 @@ on:
       - 'feature/*'  # Trigger on any push to a feature branch
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      # Step 1: Call the bootstrap workflow to initialize the backend
-      - name: Call Bootstrap Terraform Backend
-        uses: ./.github/workflows/bootstrap.yml
-        with:
-          environment: dev  # Pass the environment (dev, prod, sit)
+  bootstrap:
+    uses: ./ .github/workflows/bootstrap.yml  # Use the correct path to call the reusable workflow
+    with:
+      environment: dev  # Pass the environment (dev, prod, sit)
+    secrets: inherit  # Inherit secrets from the calling workflow
 
   terraform:
     runs-on: ubuntu-latest
@@ -23,7 +20,7 @@ jobs:
 
     environment:
       name: dev  # Set the environment as 'dev'
-    
+
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
       AWS_REGION: ${{ secrets.AWS_REGION }}  # Set AWS region
@@ -43,7 +40,6 @@ jobs:
 
       # Configure AWS credentials via OIDC to assume the role
       - name: Configure AWS credentials
-        id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
@@ -77,22 +73,8 @@ jobs:
           set -e
           terraform plan -out=tfplan -var-file=environments/dev.tfvars
 
-      # Check for Changes in Plan and apply only if there are changes
-      - name: Check for Changes in Plan
-        run: |
-          set -e
-          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
-            echo "No changes to apply."
-            exit 0  # Exit early if no changes
-          fi
-
       # Apply Terraform Plan
       - name: Terraform Apply
         run: |
           set -e
           terraform apply -auto-approve tfplan
-
-      # Cleanup Terraform workspace
-      - name: Cleanup Terraform workspace
-        run: |
-          terraform workspace select default || terraform workspace new default
