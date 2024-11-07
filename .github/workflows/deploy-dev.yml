@@ -7,9 +7,13 @@ on:
 
 jobs:
   call-bootstrap:
-    uses: ./.github/workflows/bootstrap.yml  # Reuse the bootstrap workflow
-    with:
-      environment: dev  # Pass the environment as an input
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Call the bootstrap workflow to initialize the backend
+      - name: Call Bootstrap Terraform Backend
+        uses: ./.github/workflows/bootstrap.yml  # Using the relative path to call the reusable workflow
+        with:
+          environment: dev  # Pass the environment (dev, prod, sit)
 
   terraform:
     runs-on: ubuntu-latest
@@ -26,31 +30,31 @@ jobs:
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
 
     steps:
-      # Step 1: Checkout code from the repository
+      # Checkout code from the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Terraform
+      # Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.9.8
 
-      # Step 3: Configure AWS credentials via OIDC to assume the role
+      # Configure AWS credentials via OIDC to assume the role
       - name: Configure AWS credentials
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Assume the DEV role
-          aws-region: ${{ secrets.AWS_REGION }}  # Set the AWS region
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # Step 4: Terraform Format (Auto-fix)
+      # Terraform Format (Auto-fix)
       - name: Terraform Format (Auto-fix)
         run: |
           set -e
           terraform fmt -recursive
 
-      # Step 5: Terraform Init
+      # Terraform Init
       - name: Terraform Init
         run: |
           set -e
@@ -59,35 +63,35 @@ jobs:
             -backend-config="key=terraform/dev/dev.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"
 
-      # Step 6: Terraform Validate
+      # Terraform Validate
       - name: Terraform Validate
         run: |
           set -e
           terraform validate
 
-      # Step 7: Terraform Plan
+      # Terraform Plan
       - name: Terraform Plan
         id: plan
         run: |
           set -e
           terraform plan -out=tfplan -var-file=environments/dev.tfvars
 
-      # Step 8: Check for Changes in Plan
+      # Check if there are changes in the plan, and skip apply if none
       - name: Check for Changes in Plan
         run: |
           set -e
           if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
             echo "No changes to apply."
-            exit 0  # Exit early if no changes
+            exit 0
           fi
 
-      # Step 9: Terraform Apply
+      # Terraform Apply
       - name: Terraform Apply
         run: |
           set -e
           terraform apply -auto-approve tfplan
 
-      # Step 10: Cleanup Terraform workspace
+      # Cleanup Terraform workspace
       - name: Cleanup Terraform workspace
         run: |
           terraform workspace select default || terraform workspace new default

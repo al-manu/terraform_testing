@@ -7,7 +7,6 @@ on:
         description: 'The environment to bootstrap (dev, sit, prod)'
         required: true
         default: 'dev'
-    type: workflow_call  # Correct type declaration
 
 jobs:
   bootstrap:
@@ -20,7 +19,7 @@ jobs:
       name: ${{ github.event.inputs.environment }}  # Dynamic environment from the input
     
     env:
-      AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Fixed this line
+      AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Correct secret reference
       AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS Region, shared across all environments
       TF_VAR_TF_STATE_BUCKET: ${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}  # S3 bucket per environment
       TF_STATE_BUCKET_KEY: "terraform/${{ github.event.inputs.environment }}/terraform_backend_config.tfstate"  # Key per environment
