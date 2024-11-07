@@ -64,9 +64,9 @@ jobs:
             echo "Bucket $LOCK_BUCKET_NAME already exists. Skipping creation."
           fi
 
-          # # Output bucket names for use in subsequent workflows
-          # echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
-          # echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
+          # Output bucket names for use in subsequent workflows
+          echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
+          echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
 
           # Optionally, enable versioning for the state and lock buckets
           aws s3api put-bucket-versioning --bucket "$STATE_BUCKET_NAME" --versioning-configuration Status=Enabled
