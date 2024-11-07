@@ -8,11 +8,11 @@ variable "environment" {
 }
 
 # Variable for AWS Region
-# variable "aws_region" {
-#   description = "The AWS region"
-#   type        = string
-#   default     = "us-west-2"  # Default to a region if not passed
-# }
+variable "aws_region" {
+  description = "The AWS region"
+  type        = string
+  # default     = "us-west-2"  # Default to a region if not passed
+}
 
 # Check if the state bucket exists
 data "aws_s3_bucket" "state_bucket_check" {
