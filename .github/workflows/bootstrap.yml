@@ -61,11 +61,15 @@ jobs:
           create_bucket_if_needed "$STATE_BUCKET_NAME"
           create_bucket_if_needed "$LOCK_BUCKET_NAME"
 
+          # Add a short delay to ensure bucket is fully registered (in case of eventual consistency)
+          echo "Waiting for the buckets to be fully available..."
+          sleep 10  # Wait for 10 seconds to ensure AWS propagates the bucket status
+
           # Enable versioning on both buckets after creation
           enable_versioning() {
             local BUCKET_NAME=$1
             echo "Enabling versioning for $BUCKET_NAME..."
-            aws s3api put-bucket-versioning --bucket "$BUCKET_NAME" --versioning-configuration Status=Enabled
+            aws s3api put-bucket-versioning --bucket "$BUCKET_NAME" --versioning-configuration Status=Enabled --region "$REGION"
           }
 
           # Enable versioning on both buckets
@@ -91,7 +95,7 @@ jobs:
           # Check if the state file exists before uploading
           if [ -f "$STATE_FILE" ]; then
             echo "Uploading Terraform state file to the 'tfsate' directory..."
-            aws s3 cp "$STATE_FILE" s3://"$STATE_BUCKET_NAME"/tfsate/"$STATE_BUCKET_NAME".tf
+            aws s3 cp "$STATE_FILE" s3://"$STATE_BUCKET_NAME"/tfsate/"$STATE_BUCKET_NAME".tf --region "$REGION"
           else
             echo "Terraform state file not found, skipping upload."
           fi
@@ -105,7 +109,7 @@ jobs:
           # Check if the lock file exists before uploading
           if [ -f "$LOCK_FILE" ]; then
             echo "Uploading Terraform lock file to the 'tflock' directory..."
-            aws s3 cp "$LOCK_FILE" s3://"$LOCK_BUCKET_NAME"/tflock/"$LOCK_BUCKET_NAME".hcl
+            aws s3 cp "$LOCK_FILE" s3://"$LOCK_BUCKET_NAME"/tflock/"$LOCK_BUCKET_NAME".hcl --region "$REGION"
           else
             echo "Terraform lock file not found, skipping upload."
           fi
@@ -114,4 +118,3 @@ jobs:
       - name: Final message
         run: |
           echo "Terraform state and lock files uploaded successfully to S3."
-
