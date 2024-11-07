@@ -16,14 +16,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Set up AWS credentials via OIDC (AWS_ROLE_ARN and AWS_REGION are passed as inputs)
       - name: Configure AWS credentials
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Pass the AWS_ROLE_ARN from secrets
-          aws-region: ${{ secrets.AWS_REGION }}  # Pass the AWS region from secrets
-          audience: sts.amazonaws.com  # Required audience for OIDC role assumption
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Role ARN
+          aws-region: ${{ secrets.AWS_REGION }}  # AWS Region from secrets
+          audience: sts.amazonaws.com  # Audience required for OIDC role assumption
+      
 
       - name: Check if Lock File Exists in S3
         id: check_lock
