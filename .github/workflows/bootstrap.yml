@@ -8,9 +8,16 @@ on:
         required: true
         type: string
 
+
+
 jobs:
   setup:
     runs-on: ubuntu-latest
+
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
+      # TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
 
     steps:
       - name: Checkout code
