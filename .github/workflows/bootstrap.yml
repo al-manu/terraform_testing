@@ -19,7 +19,7 @@ jobs:
       name: ${{ github.event.inputs.environment }}  # Dynamic environment from the input
     
     env:
-      AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Role to assume, dynamically selected based on environment
+      AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Role to assume dynamically
       AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS Region, shared across all environments
       TF_VAR_TF_STATE_BUCKET: ${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}  # S3 bucket per environment
       TF_STATE_BUCKET_KEY: "terraform/${{ github.event.inputs.environment }}/terraform_backend_config.tfstate"  # Key per environment
@@ -40,7 +40,7 @@ jobs:
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Assume the provided AWS role ARN for the specified environment
+          role-to-assume: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Assume the role for the given environment
           aws-region: ${{ secrets.AWS_REGION }}  # Set the AWS region
 
       # Step 4: Initialize Terraform with backend config
@@ -51,8 +51,8 @@ jobs:
             -backend-config="bucket=${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}" \
             -backend-config="key=${{ env.TF_STATE_BUCKET_KEY }}" \
             -backend-config="region=${{ secrets.AWS_REGION }}"
-
-      # Step 5: Check if the Terraform state file exists
+      
+      # Step 5: Check if the backend state file exists
       - name: Check if Terraform State file exists
         run: |
           set -e
@@ -61,3 +61,4 @@ jobs:
           else
             echo "State file does not exist. Creating initial infrastructure..."
             terraform apply -auto-approve  # Apply the initial state setup
+          fi

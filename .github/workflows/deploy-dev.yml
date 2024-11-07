@@ -6,24 +6,12 @@ on:
       - 'feature/*'  # Trigger on any push to a feature branch
 
 jobs:
-  # Job 1: Bootstrap the backend
-  bootstrap:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write  # Required for OIDC authentication
-      contents: read   # Required for checking out the code
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  call-bootstrap:
+    uses: ./.github/workflows/bootstrap.yml  # Reuse the bootstrap workflow
+    with:
+      environment: dev  # Pass the environment as an input
 
-      - name: Call Bootstrap Terraform Backend
-        uses: ./.github/workflows/bootstrap.yml
-        with:
-          environment: dev  # Pass the environment (dev, sit, prod)
-
-  # Job 2: Deploy Terraform Infrastructure
   terraform:
-    needs: bootstrap  # Ensure that the bootstrap job runs before deploying
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # Required for OIDC role assumption
@@ -31,7 +19,7 @@ jobs:
 
     environment:
       name: dev  # Set the environment as 'dev'
-
+    
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
       AWS_REGION: ${{ secrets.AWS_REGION }}  # Set AWS region
@@ -53,8 +41,8 @@ jobs:
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Assume the DEV role
+          aws-region: ${{ secrets.AWS_REGION }}  # Set the AWS region
 
       # Step 4: Terraform Format (Auto-fix)
       - name: Terraform Format (Auto-fix)
@@ -84,13 +72,13 @@ jobs:
           set -e
           terraform plan -out=tfplan -var-file=environments/dev.tfvars
 
-      # Step 8: Check for changes and skip apply if no changes are found
+      # Step 8: Check for Changes in Plan
       - name: Check for Changes in Plan
         run: |
           set -e
           if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
             echo "No changes to apply."
-            exit 0
+            exit 0  # Exit early if no changes
           fi
 
       # Step 9: Terraform Apply
