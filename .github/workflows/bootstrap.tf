@@ -6,11 +6,19 @@
 resource "aws_s3_bucket" "state_bucket" {
   bucket = "dw-test-state-${var.environment}"
   acl    = "private"
+
+  lifecycle {
+    ignore_changes = [acl]  # Ignore changes to ACL if bucket already exists
+  }
 }
 
 resource "aws_s3_bucket" "lock_bucket" {
   bucket = "dw-test-lock-${var.environment}"
   acl    = "private"
+
+  lifecycle {
+    ignore_changes = [acl]  # Ignore changes to ACL if bucket already exists
+  }
 }
 
 # Output the bucket names so they can be used in the workflow

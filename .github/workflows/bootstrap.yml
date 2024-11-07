@@ -35,7 +35,6 @@ jobs:
           AWS_REGION="${{ secrets.AWS_REGION }}"
 
           cd .github/workflows
-          ls
           # Initialize Terraform
           terraform init
 
