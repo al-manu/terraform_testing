@@ -15,8 +15,9 @@ jobs:
       name: dev  # Adjust environment (prod, staging, etc.)
     
     env:
-        AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Use the AWS role for dev
-        AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Use the AWS role for dev
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -64,12 +65,11 @@ jobs:
             echo "Bucket $LOCK_BUCKET_NAME already exists. Skipping creation."
           fi
 
-          # Output bucket names for use in subsequent workflows
-          echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
-          echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
-
-          # Optionally, enable versioning for the state and lock buckets
+          # Enable versioning for the state and lock buckets
+          echo "Enabling versioning for the state bucket: $STATE_BUCKET_NAME"
           aws s3api put-bucket-versioning --bucket "$STATE_BUCKET_NAME" --versioning-configuration Status=Enabled
+
+          echo "Enabling versioning for the lock bucket: $LOCK_BUCKET_NAME"
           aws s3api put-bucket-versioning --bucket "$LOCK_BUCKET_NAME" --versioning-configuration Status=Enabled
 
           echo "Created state and lock buckets: $STATE_BUCKET_NAME, $LOCK_BUCKET_NAME"
@@ -82,7 +82,7 @@ jobs:
           # Check if the state file exists before uploading
           STATE_FILE="terraform.tfstate"  # Default Terraform state file name
           if [ -f "$STATE_FILE" ]; then
-            echo "Uploading Terraform state file to simulated 'tfsate' directory..."
+            echo "Uploading Terraform state file to 'tfsate' directory..."
             aws s3 cp "$STATE_FILE" s3://"$STATE_BUCKET_NAME"/tfsate/"$STATE_BUCKET_NAME".tf
           else
             echo "Terraform state file not found, skipping upload."
@@ -93,7 +93,7 @@ jobs:
           # Similarly, you can upload the Terraform lock file if it exists
           LOCK_FILE="terraform.lock.hcl"  # Terraform lock file
           if [ -f "$LOCK_FILE" ]; then
-            echo "Uploading Terraform lock file to simulated 'tflock' directory..."
+            echo "Uploading Terraform lock file to 'tflock' directory..."
             aws s3 cp "$LOCK_FILE" s3://"$LOCK_BUCKET_NAME"/tflock/"$LOCK_BUCKET_NAME".hcl
           else
             echo "Terraform lock file not found, skipping upload."
