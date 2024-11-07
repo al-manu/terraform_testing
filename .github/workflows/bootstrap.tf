@@ -23,11 +23,11 @@ output "lock_bucket_name" {
 }
 
 # # bootstrap.tf
-# variable "aws_region" {
-#   description = "The AWS region"
-#   type        = string
-#   default     = "us-west-2"  # You can default to a region
-# }
+variable "aws_region" {
+  description = "The AWS region"
+  type        = string
+  # default     = "us-west-2"  # You can default to a region
+}
 
 variable "environment" {
   description = "The environment (e.g., dev, prod)"
