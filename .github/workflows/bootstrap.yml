@@ -9,8 +9,8 @@ jobs:
   create-resources:
     runs-on: ubuntu-latest
     environment:
-      name: prod 
-    # Configure AWS Credentials using OIDC for authentication
+      name: prod  # Adjust environment (prod, staging, etc.)
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -31,10 +31,10 @@ jobs:
           LOCK_BUCKET_NAME="terraform-lock-${{ github.sha }}"
 
           # Create the state bucket
-          aws s3api create-bucket --bucket $STATE_BUCKET_NAME --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION_DEV }}
+          aws s3api create-bucket --bucket $STATE_BUCKET_NAME --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION }}
           
           # Create the lock bucket (optional, for state locking)
-          aws s3api create-bucket --bucket $LOCK_BUCKET_NAME --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION_DEV }}
+          aws s3api create-bucket --bucket $LOCK_BUCKET_NAME --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION }}
 
           # Output bucket names (this can be used in subsequent workflows)
           echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
