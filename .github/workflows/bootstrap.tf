@@ -18,12 +18,14 @@ resource "aws_s3_bucket" "lock_bucket" {
 }
 
 # Output the bucket names so they can be used in the workflow
+# Output the state bucket name
 output "state_bucket_name" {
-  value = aws_s3_bucket.state_bucket.bucket
+  value = aws_s3_bucket.state_bucket[0].bucket  # Use [0] to refer to the first (and in your case, the only) instance
 }
 
+# Output the lock bucket name
 output "lock_bucket_name" {
-  value = aws_s3_bucket.lock_bucket.bucket
+  value = aws_s3_bucket.lock_bucket[0].bucket  # Use [0] to refer to the first (and in your case, the only) instance
 }
 
 # # bootstrap.tf
