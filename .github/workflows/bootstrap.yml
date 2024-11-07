@@ -12,6 +12,9 @@ on:
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC role assumption
+      contents: read   # Required for checking out the code
     environment:
       name: ${{ inputs.environment }}
 
