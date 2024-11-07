@@ -11,15 +11,6 @@ on:
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.event.inputs.environment }}  # Dynamically set environment
-
-    env:
-      AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Role ARN based on environment
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # Region for all environments
-      TF_VAR_TF_STATE_BUCKET: ${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}  # S3 bucket per environment
-      TF_STATE_BUCKET_KEY: "terraform/${{ github.event.inputs.environment }}/terraform_backend_config.tfstate"  # Key per environment
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -36,18 +27,18 @@ jobs:
           role-to-assume: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Initialize Terraform Backend
+      - name: Initialize Terraform with Backend Config
         run: |
           terraform init \
             -backend-config="bucket=${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}" \
-            -backend-config="key=${{ env.TF_STATE_BUCKET_KEY }}" \
+            -backend-config="key=terraform/${{ github.event.inputs.environment }}/terraform_backend_config.tfstate" \
             -backend-config="region=${{ secrets.AWS_REGION }}"
-      
-      - name: Check if Terraform State file exists
+          
+      - name: Verify Backend Initialization
         run: |
-          if aws s3 ls s3://${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}/${{ env.TF_STATE_BUCKET_KEY }}; then
+          set -e
+          if aws s3 ls s3://${{ secrets["TF_STATE_BUCKET_" + github.event.inputs.environment | upper ] }}/terraform/${{ github.event.inputs.environment }}/terraform_backend_config.tfstate; then
             echo "State file already exists."
           else
             echo "State file does not exist. Creating initial infrastructure..."
-            terraform apply -auto-approve  # Apply the initial state setup
-          fi
+            terraform apply -auto-approve

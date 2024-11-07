@@ -6,12 +6,11 @@ on:
       - 'feature/*'  # Trigger on any push to a feature branch
 
 jobs:
-  # Step 1: Call the Bootstrap Workflow
+  # Step 1: Call the Bootstrap Workflow to set up the backend
   call-bootstrap:
-    runs-on: ubuntu-latest
-    uses: ./.github/workflows/bootstrap.yml  # Call the bootstrap.yml workflow
+    uses: ./.github/workflows/bootstrap.yml  # Call the reusable workflow
     with:
-      environment: dev  # Pass the 'dev' environment to the bootstrap workflow
+      environment: dev  # Pass the environment ('dev') as input
 
   # Step 2: Deploy Resources to DEV
   deploy:
