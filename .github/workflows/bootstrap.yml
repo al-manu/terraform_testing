@@ -12,9 +12,8 @@ on:
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
-
     environment:
-      name: ${{ inputs.environment }}  # Use the passed environment input
+      name: ${{ inputs.environment }}
 
     steps:
       - name: Checkout code
