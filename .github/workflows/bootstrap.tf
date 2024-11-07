@@ -3,22 +3,23 @@
 #   region = var.aws_region
 # }
 
-resource "aws_s3_bucket" "state_bucket" {
-  bucket = "dw-test-state-${var.environment}"
-  acl    = "private"
-
-  lifecycle {
-    ignore_changes = [acl]  # Ignore changes to ACL if bucket already exists
-  }
+variable "environment" {
+  description = "The environment to deploy to"
+  type        = string
 }
 
+# Create state bucket for the specific environment
+resource "aws_s3_bucket" "state_bucket" {
+  count  = length(data.aws_s3_bucket.state_bucket_check) == 0 ? 1 : 0
+  bucket = "dw-test-state-${var.environment}"
+  acl    = "private"
+}
+
+# Create lock bucket for the specific environment
 resource "aws_s3_bucket" "lock_bucket" {
+  count  = length(data.aws_s3_bucket.lock_bucket_check) == 0 ? 1 : 0
   bucket = "dw-test-lock-${var.environment}"
   acl    = "private"
-
-  lifecycle {
-    ignore_changes = [acl]  # Ignore changes to ACL if bucket already exists
-  }
 }
 
 # Output the bucket names so they can be used in the workflow
