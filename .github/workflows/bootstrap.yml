@@ -7,6 +7,7 @@ on:
         description: 'The environment to bootstrap (dev, sit, prod)'
         required: true
         default: 'dev'
+        type: string
 
 jobs:
   bootstrap:
