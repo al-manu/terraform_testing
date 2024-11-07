@@ -3,11 +3,6 @@
 #   region = var.aws_region
 # }
 
-variable "environment" {
-  description = "The environment to deploy to"
-  type        = string
-}
-
 # Create state bucket for the specific environment
 resource "aws_s3_bucket" "state_bucket" {
   count  = length(data.aws_s3_bucket.state_bucket_check) == 0 ? 1 : 0
