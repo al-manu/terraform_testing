@@ -10,10 +10,14 @@ jobs:
     uses: ./.github/workflows/bootstrap.yml  # Use the reusable workflow
     with:
       environment: dev  # Pass the environment (dev, prod, etc.)
-    secrets: inherit   # Inherit secrets to use in the bootstrap job
+    secrets:
+      AWS_DEV_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Pass the role ARN as a secret
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # Pass the AWS region as a secret
+      TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for state storage
     permissions:
       id-token: write  # Required for OIDC role assumption
       contents: read   # Required for checking out the code
+
 
   terraform:
     runs-on: ubuntu-latest
