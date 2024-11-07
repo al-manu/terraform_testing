@@ -37,8 +37,8 @@ jobs:
           REGION="${{ secrets.AWS_REGION }}"
           
           # Define bucket names using a standardized naming convention
-          STATE_BUCKET_NAME="${PROJECT_NAME}-terraform-state-${ENVIRONMENT}"
-          LOCK_BUCKET_NAME="${PROJECT_NAME}-terraform-lock-${ENVIRONMENT}"
+          STATE_BUCKET_NAME="${PROJECT_NAME}-terraform-state-${ENVIRONMENT}-${GITHUB_SHA}"
+          LOCK_BUCKET_NAME="${PROJECT_NAME}-terraform-lock-${ENVIRONMENT}-${GITHUB_SHA}"
 
           echo "Creating S3 bucket with name: $STATE_BUCKET_NAME"
           echo "Creating S3 bucket with name: $LOCK_BUCKET_NAME"
