@@ -40,6 +40,8 @@ jobs:
           STATE_BUCKET_NAME="${PROJECT_NAME}-terraform-state-${ENVIRONMENT}"
           LOCK_BUCKET_NAME="${PROJECT_NAME}-terraform-lock-${ENVIRONMENT}"
 
+          echo "Creating S3 bucket with name: $STATE_BUCKET_NAME"
+          echo "Creating S3 bucket with name: $LOCK_BUCKET_NAME"
           # Create the state bucket
           aws s3api create-bucket --bucket $STATE_BUCKET_NAME --create-bucket-configuration LocationConstraint=$REGION
           
