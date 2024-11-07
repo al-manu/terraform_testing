@@ -21,3 +21,16 @@ output "state_bucket_name" {
 output "lock_bucket_name" {
   value = aws_s3_bucket.lock_bucket.bucket
 }
+
+# # bootstrap.tf
+# variable "aws_region" {
+#   description = "The AWS region"
+#   type        = string
+#   default     = "us-west-2"  # You can default to a region
+# }
+
+variable "environment" {
+  description = "The environment (e.g., dev, prod)"
+  type        = string
+  default     = "dev"  # Default to dev if not passed
+}
