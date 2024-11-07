@@ -1,7 +1,7 @@
 name: Bootstrap Terraform Backend
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       environment:
         description: 'The environment to bootstrap (dev, sit, prod)'
@@ -16,7 +16,7 @@ jobs:
       contents: read   # Required for checking out the code
 
     environment:
-      name: ${{ github.event.inputs.environment }}  # Dynamic environment based on the input
+      name: ${{ github.event.inputs.environment }}  # Dynamic environment from the input
     
     env:
       AWS_ROLE_ARN: ${{ secrets["AWS_" + github.event.inputs.environment | upper + "_ROLE_ARN"] }}  # Role to assume, dynamically selected based on environment
@@ -61,4 +61,3 @@ jobs:
           else
             echo "State file does not exist. Creating initial infrastructure..."
             terraform apply -auto-approve  # Apply the initial state setup
-          fi

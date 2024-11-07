@@ -6,8 +6,14 @@ on:
       - 'feature/*'  # Trigger on any push to a feature branch
 
 jobs:
-  bootstrap:
-    uses: ./.github/workflows/bootstrap.yml 
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Call the bootstrap workflow to initialize the backend
+      - name: Call Bootstrap Terraform Backend
+        uses: ./.github/workflows/bootstrap.yml
+        with:
+          environment: dev  # Pass the environment (dev, prod, sit)
   terraform:
     runs-on: ubuntu-latest
     permissions:

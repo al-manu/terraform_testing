@@ -21,11 +21,11 @@
 # }
 
 
-# # variable "environment" {
-# #   description = "The environment name"
-# #   type        = string
-# #   default     = "dev"
-# # }
+# variable "environment" {
+#   description = "The environment name"
+#   type        = string
+#   default     = "dev"
+# }
 
 # # # variables.tf (in the bootstrap directory)
 
