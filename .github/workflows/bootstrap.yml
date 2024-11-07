@@ -23,7 +23,7 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Role ARN passed from secrets
           aws-region: 'eu-central-1'  # AWS region passed from secrets
-          # audience: sts.amazonaws.com  # Audience for OIDC role assumption
+          audience: sts.amazonaws.com  # Audience for OIDC role assumption
 
       - name: Check if Lock File Exists in S3
         id: check_lock
