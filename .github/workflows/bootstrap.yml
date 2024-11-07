@@ -8,34 +8,21 @@ on:
         required: true
         type: string
 
-
-
 jobs:
   setup:
     runs-on: ubuntu-latest
-
-    env:
-      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
-      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
-      # TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # - name: Set up AWS credentials via OIDC
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     role-to-assume: arn:aws:iam::<aws-account-id>:role/<your-oidc-role>  # IAM Role ARN
-      #     role-session-name: GitHubActionsSession
-      #     aws-region: ${{ secrets.AWS_REGION }}
-            # Configure AWS credentials via OIDC to assume the role
+      # Set up AWS credentials via OIDC (AWS_ROLE_ARN and AWS_REGION are passed as inputs)
       - name: Configure AWS credentials
         id: aws_auth
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}  # Use the AWS_ROLE_ARN from env
-          aws-region: ${{ env.AWS_REGION }}  # Use the AWS region from env
+          role-to-assume: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Pass the AWS_ROLE_ARN from secrets
+          aws-region: ${{ secrets.AWS_REGION }}  # Pass the AWS region from secrets
 
       - name: Check if Lock File Exists in S3
         id: check_lock
