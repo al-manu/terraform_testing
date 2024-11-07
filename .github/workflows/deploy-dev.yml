@@ -7,7 +7,7 @@ on:
 
 jobs:
   bootstrap:
-    uses: ./.github/workflows/bootstrap.yml  # Use the correct path to call the reusable workflow
+    uses: ./.github/workflows/bootstrap.yml  # Call the local reusable workflow
     with:
       environment: dev  # Pass the environment (dev, prod, sit)
     secrets: inherit  # Inherit secrets from the calling workflow
@@ -22,7 +22,7 @@ jobs:
       name: dev  # Set the environment as 'dev'
 
     env:
-      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Directly set the secret for the DEV environment
       AWS_REGION: ${{ secrets.AWS_REGION }}  # Set AWS region
       TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET_DEV }}  # S3 bucket for state storage
       TF_STATE_BUCKET_KEY: "terraform/dev/terraform.tfstate"  # Path to state file
