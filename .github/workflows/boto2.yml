@@ -14,6 +14,12 @@ jobs:
       contents: read   # Required for checking out the code
     environment:
       name: ${{ github.environment }}  # Dynamically use the environment (dev, sit, prod)
+    env:
+        AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
+        # AWS_ROLE_ARN: ${{ 
+        #     github.event.inputs.environment == 'prod' && secrets.AWS_PROD_ROLE_ARN ||
+        #     github.event.inputs.environment == 'sit' && secrets.AWS_SIT_ROLE_ARN ||
+        #     secrets.AWS_DEV_ROLE_ARN }} # Default to dev if no match
 
     steps:
       # Step 1: Checkout the repository
