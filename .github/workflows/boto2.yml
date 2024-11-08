@@ -35,7 +35,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets[env.ROLE_ARN] }}
-          aws-region: ${{ secrets.AWS_REGION }}  # Directly pass the region from the secret
+          aws-region: ${{ env.AWS_REGION }}  # Directly pass the region from the secret
 
       # Step 5: Initialize Terraform and create S3 buckets for state and lock
       - name: Initialize Terraform and create S3 buckets for state and lock
