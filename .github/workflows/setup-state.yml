@@ -1,12 +1,14 @@
 name: Setup State Bucket for Terraform 
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'The environment to set up (dev, sit, prod, etc.)'
-        required: true
-        default: 'dev'
+  push:
+    branches:
+      - feature\*
+    # inputs:
+    #   environment:
+    #     description: 'The environment to set up (dev, sit, prod, etc.)'
+    #     required: true
+    #     default: 'dev'
 
 jobs:
   create-s3-bucket:
