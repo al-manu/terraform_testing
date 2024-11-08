@@ -1,4 +1,4 @@
-name: Setup State Bucket for Terraform 
+name: Setup State Bucket for Terraform BETA
 
 on:
   workflow_dispatch:
