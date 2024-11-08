@@ -1,0 +1,54 @@
+name: Bootstrap AWS Resources (State and Lock S3 Buckets)
+
+on:
+  push:
+    branches:
+      - 'feature/*'  # Trigger on push to any feature branch
+      # -main
+
+jobs:
+  create-resources:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read   # Required for checking out the code
+    environment:
+      name: dev  # This can be dynamically set based on your environment
+
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # The role ARN for assuming the dev role
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region from secrets
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up AWS OIDC credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Initialize Terraform and create S3 buckets for state and lock
+        run: |
+          # Set environment-specific variables
+          ENVIRONMENT="dev"  # Adjust dynamically based on your environment setup
+          AWS_REGION="${{ secrets.AWS_REGION }}"
+
+          cd .github/workflows
+          # Initialize Terraform
+          terraform init
+
+          # Apply Terraform to create the S3 state and lock buckets
+          terraform apply -auto-approve -var "aws_region=${AWS_REGION}" -var "environment=${ENVIRONMENT}"
+
+          # Output the created resources
+          STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
+          LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
+
+          echo "State bucket: $STATE_BUCKET_NAME"
+          echo "Lock bucket: $LOCK_BUCKET_NAME"
+
+          # Set the bucket names in the GitHub environment so they can be used later
+          echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
+          echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV

@@ -1,0 +1,72 @@
+name: Bootstraping
+
+on:
+  push:
+    branches:
+      - 'feature/*'  # Trigger on push to any feature branch
+      # - 'main'  # Uncomment this line to trigger on main if desired
+
+jobs:
+  create-resources:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read   # Required for checking out the code
+    environment:
+      name: ${{ github.environment }}  # Dynamically use the environment (dev, sit, prod)
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Dynamically set the role ARN based on GitHub environment
+      - name: Set role ARN for environment
+        run: |
+          echo "ROLE_ARN=AWS_${{ github.environment }}_ROLE_ARN" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV  # Set AWS region as an environment variable
+
+      # Step 3: Debug to check if AWS_REGION is set correctly
+      - name: Debug AWS_REGION
+        run: echo "AWS_REGION=${{ secrets.AWS_REGION }}"
+
+      # Step 4: Set up AWS OIDC credentials
+      - name: Set up AWS OIDC credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets[env.ROLE_ARN] }}
+          aws-region: ${{ env.AWS_REGION }}  # Directly pass the region from the secret
+
+      # Step 5: Initialize Terraform and create S3 buckets for state and lock
+      - name: Initialize Terraform and create S3 buckets for state and lock
+        run: |
+          ENVIRONMENT="${{ github.environment }}"  # Dynamically set based on the GitHub environment (dev, sit, prod)
+          AWS_REGION="${{ secrets.AWS_REGION }}"  # Use AWS region from secrets
+
+          # Move to the correct directory (if needed)
+          cd .github/workflows
+
+          # Initialize Terraform
+          terraform init
+
+          # Apply the Terraform configuration to create the S3 buckets for state and lock
+          terraform apply -auto-approve -var "aws_region=${AWS_REGION}" -var "environment=${ENVIRONMENT}"
+
+          # Get the bucket names from the Terraform output
+          STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
+          LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
+
+          echo "State bucket: $STATE_BUCKET_NAME"
+          echo "Lock bucket: $LOCK_BUCKET_NAME"
+
+          # Save the bucket names as environment variables for subsequent steps
+          echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
+          echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
+
+      # Optionally, you can add additional steps for verification or further automation
+      # Example: Verifying the created S3 buckets (optional)
+      - name: Verify the S3 buckets
+        run: |
+          echo "Verifying the existence of the state and lock S3 buckets..."
+          aws s3 ls "s3://$STATE_BUCKET_NAME" || echo "State bucket $STATE_BUCKET_NAME does not exist."
+          aws s3 ls "s3://$LOCK_BUCKET_NAME" || echo "Lock bucket $LOCK_BUCKET_NAME does not exist."
