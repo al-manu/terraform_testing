@@ -1,4 +1,4 @@
-name: Setup S3 State Bucket for Terraform
+name: Setup State Bucket
 
 on:
   workflow_dispatch:
