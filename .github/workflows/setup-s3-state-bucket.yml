@@ -1,4 +1,4 @@
-name: Setup State Bucket for Terraform
+name: Setup State Bucket for Terraform 
 
 on:
   workflow_dispatch:
@@ -14,6 +14,13 @@ jobs:
     permissions:
       id-token: write  # Required for OIDC role assumption
       contents: read   # Required for checking out the code
+    environment:
+      name: dev  # Correct environment name if needed
+
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Use the AWS role for production
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
+      TF_VAR_TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # S3 bucket for Terraform state
 
     steps:
       # Checkout the repository
