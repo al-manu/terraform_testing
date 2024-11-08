@@ -3,7 +3,8 @@ name: Bootstrap AWS Resources (State and Lock S3 Buckets)
 on:
   push:
     branches:
-      - 'feature/*'  # Trigger on push to any feature branch
+      # - 'feature/*'  # Trigger on push to any feature branch
+      -main
 
 jobs:
   create-resources:
