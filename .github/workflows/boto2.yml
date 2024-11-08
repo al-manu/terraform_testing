@@ -1,4 +1,4 @@
-name: Bootstrap AWS Resources (State and Lock S3 Buckets)
+name: Bootstrap 2(State and Lock S3 Buckets)
 
 on:
   push:
