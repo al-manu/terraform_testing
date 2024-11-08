@@ -1,4 +1,4 @@
-name: Setup State Bucket
+name: Setup S3StatBucketfoTerraform
 
 on:
   workflow_dispatch:
@@ -30,7 +30,7 @@ jobs:
       # Ensure S3 Bucket exists for state storage and locking
       - name: Create S3 bucket if not exists
         run: |
-          BUCKET_NAME="${{ secrets.TF_STATE_BUCKET }}"  # Use the state bucket name
+          BUCKET_NAME="${{ secrets.TF_STATE_BUCKET }}"  # Use the state bucket name from secrets
           STATE_FILE="terraform/${{ github.event.inputs.environment }}/dev.tfstate"  # Path to state file in S3
 
           # Check if the bucket exists, if not, create it
@@ -40,7 +40,3 @@ jobs:
           aws s3 cp /dev/null s3://$BUCKET_NAME/$STATE_FILE
           
           echo "S3 bucket $BUCKET_NAME created (if not already) and state file initialized."
-
-      # Optional: Setup DynamoDB lock table (if using)
-      # If you're using DynamoDB for state locking, you can add the logic for creating that table here
-      # For now, since you're using only S3 for locking, this part is unnecessary.
