@@ -39,7 +39,7 @@ resource "aws_s3_bucket" "export_bucket" {
 #   }
 # }
 
-# variable "environment" {}
+variable "environment" {}
 
 resource "aws_s3_bucket" "state" {
   bucket = "my-terraform-state-${var.environment}"
