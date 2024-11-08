@@ -1,4 +1,4 @@
-name: Bootstrap 2(State and Lock S3 Buckets)
+name: Bootstrap AWS Resources (State and Lock S3 Buckets)
 
 on:
   push:
@@ -14,13 +14,7 @@ jobs:
       contents: read   # Required for checking out the code
     environment:
       name: ${{ github.environment }}  # Dynamically use the environment (dev, sit, prod)
-    env:
-        AWS_REGION: ${{ secrets.AWS_REGION }}  # Use the AWS region from secrets
-        # AWS_ROLE_ARN: ${{ 
-        #     github.event.inputs.environment == 'prod' && secrets.AWS_PROD_ROLE_ARN ||
-        #     github.event.inputs.environment == 'sit' && secrets.AWS_SIT_ROLE_ARN ||
-        #     secrets.AWS_DEV_ROLE_ARN }} # Default to dev if no match
-
+    
     steps:
       # Step 1: Checkout the repository
       - name: Checkout repository
@@ -30,21 +24,22 @@ jobs:
       - name: Set role ARN for environment
         run: |
           echo "ROLE_ARN=AWS_${{ github.environment }}_ROLE_ARN" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV  # Set AWS region as an environment variable
 
       # Step 3: Set up AWS OIDC credentials
       - name: Set up AWS OIDC credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          # Use the environment variable set in Step 2 to get the correct secret
+          # Use the dynamically set ROLE_ARN from Step 2
           role-to-assume: ${{ secrets[env.ROLE_ARN] }}
-          aws-region: ${{env.AWS_REGION  }}  # Use the region from secrets
+          aws-region: ${{ env.AWS_REGION }}  # Use the region from the environment variable set in Step 2
 
       # Step 4: Initialize Terraform and create S3 buckets for state and lock
       - name: Initialize Terraform and create S3 buckets for state and lock
         run: |
           # Dynamically set the environment variable (dev, sit, prod) from GitHub environment context
           ENVIRONMENT="${{ github.environment }}"  # Dynamically set based on the GitHub environment (dev, sit, prod)
-          AWS_REGION="${{ secrets.AWS_REGION }}"  # Use AWS region from secrets
+          AWS_REGION="${{ env.AWS_REGION }}"  # Use AWS region from the environment variable set earlier
 
           # Move to the correct directory (if needed)
           cd .github/workflows
