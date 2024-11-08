@@ -44,7 +44,7 @@ jobs:
           if ! aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
             echo "Creating S3 bucket: $BUCKET_NAME"
             # Check if the region is us-east-1 and adjust the create-bucket command
-            if [ "${{ secrets.AWS_REGION }}" == "eu-central-1" ]; then
+            if [ "${{ secrets.AWS_REGION }}" == "eu-east-1" ]; then
               aws s3api create-bucket --bucket $BUCKET_NAME --region ${{ secrets.AWS_REGION }}
             else
               aws s3api create-bucket --bucket $BUCKET_NAME --region ${{ secrets.AWS_REGION }} --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION }}
