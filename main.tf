@@ -25,16 +25,29 @@ resource "aws_s3_bucket" "export_bucket" {
 #   bucket = "${var.TF_STATE_BUCKET}-${var.environment}"
 # }
 
-# s3_backend.tf
-resource "aws_s3_bucket" "terraform_state" {
-  bucket = "your-terraform-state-bucket"
-  region = "us-west-2"
+# # s3_backend.tf
+# resource "aws_s3_bucket" "terraform_state" {
+#   bucket = "your-terraform-state-bucket"
+#   # region = "us-west-2"
 
-  versioning {
-    enabled = true
-  }
+#   versioning {
+#     enabled = true
+#   }
 
-  lifecycle {
-    prevent_destroy = true  # Prevent accidental deletion of the state bucket
-  }
+#   lifecycle {
+#     prevent_destroy = true  # Prevent accidental deletion of the state bucket
+#   }
+# }
+
+# variable "environment" {}
+
+resource "aws_s3_bucket" "state" {
+  bucket = "my-terraform-state-${var.environment}"
+  acl    = "private"
 }
+
+resource "aws_s3_bucket" "lock" {
+  bucket = "my-terraform-lock-${var.environment}"
+  acl    = "private"
+}
+
