@@ -14,40 +14,41 @@ variable "aws_region" {
   # default     = "us-west-2"  # Default to a region if not passed
 }
 
-# # Check if the state bucket exists
-# data "aws_s3_bucket" "state_bucket_check" {
-#   bucket = "dw-test-state-${var.environment}"
-# }
+# Check if the state bucket exists
+data "aws_s3_bucket" "state_bucket_check" {
+  bucket = "dw-test-state-${var.environment}"
+}
 
-# # Check if the lock bucket exists
-# data "aws_s3_bucket" "lock_bucket_check" {
-#   bucket = "dw-test-lock-${var.environment}"
-# }
+# Check if the lock bucket exists
+data "aws_s3_bucket" "lock_bucket_check" {
+  bucket = "dw-test-lock-${var.environment}"
+}
 
-# # Create the state bucket if it doesn't exist
-# resource "aws_s3_bucket" "state_bucket" {
-#   bucket = "dw-test-state-${var.environment}"
-#   acl    = "private"
-#   # Only create if it doesn't already exist
-#   lifecycle {
-#     prevent_destroy = true  # Prevent accidental deletion
-#   }
+# Create the state bucket if it doesn't exist
+resource "aws_s3_bucket" "state_bucket" {
+  bucket = "dw-test-state-${var.environment}"
+  acl    = "private"
+  # Only create if it doesn't already exist
+  lifecycle {
+    prevent_destroy = true  # Prevent accidental deletion
+  }
 
-#   # Only create if the bucket doesn't exist already
-#   count = length(data.aws_s3_bucket.state_bucket_check.id) == 0 ? 1 : 0
-# }
+  # Only create if the bucket doesn't exist already
+  count = length(data.aws_s3_bucket.state_bucket_check.id) == 0 ? 1 : 0
+}
 
-# # Create the lock bucket if it doesn't exist
-# resource "aws_s3_bucket" "lock_bucket" {
-#   bucket = "dw-test-lock-${var.environment}"
-#   # Enable versioning for state file recovery
-#   versioning {
-#     enabled = true
-#   }
-#   # Only create if it doesn't already exist
-#   lifecycle {
-#     prevent_destroy = true  # Prevent accidental deletion
-#   }
+# Create the lock bucket if it doesn't exist
+resource "aws_s3_bucket" "lock_bucket" {
+  bucket = "dw-test-lock-${var.environment}"
+  # Enable versioning for state file recovery
+  versioning {
+    enabled = true
+  }
+  # Only create if it doesn't already exist
+  lifecycle {
+    prevent_destroy = true  # Prevent accidental deletion
+  }
+}
 
 #   # Only create if the bucket doesn't exist already
 #   count = length(data.aws_s3_bucket.lock_bucket_check.id) == 0 ? 1 : 0
