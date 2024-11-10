@@ -1,12 +1,10 @@
 name: Bootstraping v1
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Specify the environment to destroy (dev, sit, prod)'
-        required: true
-        default: 'dev'
+  push:
+    branches:
+      - 'feature/*'  # Trigger on push to any feature branch
+      # - 'main'  # Uncomment this line to trigger on main if desired
 
 jobs:
   create-resources:
@@ -15,28 +13,71 @@ jobs:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
     environment:
-      name: ${{ inputs.environment }}  # Dynamically use the environment (dev, sit, prod)
+      name: ${{ github.environment }}  # Dynamically use the environment (dev, sit, prod)
 
     steps:
       # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Dynamically set the role ARN and AWS region
+      # Step 2: Dynamically set the role ARN and AWS region based on GitHub environment (specifically for dev, prod, etc.)
       - name: Set role ARN and AWS region for environment
         run: |
-          echo "ROLE_ARN=${{ secrets['AWS_' + inputs.environment + '_ROLE_ARN'] }}" >> $GITHUB_ENV
-          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV  # Set AWS region as an environment variable
+          # Check for environment and set role ARN and region accordingly
+          if [[ "${{ github.environment }}" == "dev" ]]; then
+            echo "ROLE_ARN=${{ secrets.AWS_DEV_ROLE_ARN }}" >> $GITHUB_ENV  # Use the secret for dev role ARN
+            echo "AWS_REGION=us-east-1" >> $GITHUB_ENV  # Example region for dev
+          elif [[ "${{ github.environment }}" == "prod" ]]; then
+            echo "ROLE_ARN=${{ secrets.AWS_PROD_ROLE_ARN }}" >> $GITHUB_ENV  # Use the secret for prod role ARN
+            echo "AWS_REGION=us-west-2" >> $GITHUB_ENV  # Example region for prod (use your actual region)
+          else
+            echo "ROLE_ARN=AWS_${{ github.environment }}_ROLE_ARN" >> $GITHUB_ENV  # Default role ARN (e.g., for sit, staging)
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV  # Use region from secret for other environments
+          fi
 
       # Step 3: Debug to check if AWS_REGION is set correctly
       - name: Debug AWS_REGION
         run: |
-          echo "AWS_REGION=${{ secrets.AWS_REGION }}"
-          echo "AWS_REGION from env=${{ env.AWS_REGION }}"
+          echo "AWS_REGION=${{ env.AWS_REGION }}"
+          echo "ROLE_ARN=${{ env.ROLE_ARN }}"
 
       # Step 4: Set up AWS OIDC credentials
       - name: Set up AWS OIDC credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ env.ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}  # Directly pass the region from the environment variable
+          aws-region: ${{ env.AWS_REGION }}  # Use the AWS region from environment variable
+
+      # Step 5: Initialize Terraform and create S3 buckets for state and lock
+      - name: Initialize Terraform and create S3 buckets for state and lock
+        run: |
+          ENVIRONMENT="${{ github.environment }}"  # Dynamically set based on the GitHub environment (dev, sit, prod)
+          AWS_REGION="${{ env.AWS_REGION }}"  # Use AWS region from environment
+
+          # Move to the correct directory (if needed)
+          cd .github/workflows
+
+          # Initialize Terraform
+          terraform init
+
+          # Apply the Terraform configuration to create the S3 buckets for state and lock
+          terraform apply -auto-approve -var "aws_region=${AWS_REGION}" -var "environment=${ENVIRONMENT}"
+
+          # Get the bucket names from the Terraform output
+          STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
+          LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
+
+          echo "State bucket: $STATE_BUCKET_NAME"
+          echo "Lock bucket: $LOCK_BUCKET_NAME"
+
+          # Save the bucket names as environment variables for subsequent steps
+          echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
+          echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
+
+      # Optionally, you can add additional steps for verification or further automation
+      # Example: Verifying the created S3 buckets (optional)
+      - name: Verify the S3 buckets
+        run: |
+          echo "Verifying the existence of the state and lock S3 buckets..."
+          aws s3 ls "s3://$STATE_BUCKET_NAME" || echo "State bucket $STATE_BUCKET_NAME does not exist."
+          aws s3 ls "s3://$LOCK_BUCKET_NAME" || echo "Lock bucket $LOCK_BUCKET_NAME does not exist."
