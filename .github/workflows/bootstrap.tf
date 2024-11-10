@@ -14,15 +14,15 @@ variable "aws_region" {
   # default     = "us-west-2"  # Default to a region if not passed
 }
 
-# Check if the state bucket exists
-data "aws_s3_bucket" "state_bucket_check" {
-  bucket = "dw-test-state-${var.environment}"
-}
+# # Check if the state bucket exists
+# data "aws_s3_bucket" "state_bucket_check" {
+#   bucket = "dw-test-state-${var.environment}"
+# }
 
-# Check if the lock bucket exists
-data "aws_s3_bucket" "lock_bucket_check" {
-  bucket = "dw-test-lock-${var.environment}"
-}
+# # Check if the lock bucket exists
+# data "aws_s3_bucket" "lock_bucket_check" {
+#   bucket = "dw-test-lock-${var.environment}"
+# }
 
 # Create the state bucket if it doesn't exist
 resource "aws_s3_bucket" "state_bucket" {
