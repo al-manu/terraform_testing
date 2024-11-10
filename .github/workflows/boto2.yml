@@ -13,7 +13,7 @@ jobs:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
     environment:
-      name: sit  # Make sure to run only for the 'sit' environment
+      name: sit  # This is for the 'sit' environment
 
     steps:
       # Step 1: Checkout the repository
@@ -39,16 +39,7 @@ jobs:
           role-to-assume: ${{ env.ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}  # Use the AWS region from environment variable
 
-      # Step 5: Verify if the S3 bucket exists
-      - name: Verify S3 bucket exists
-        run: |
-          BUCKET_NAME="dw-test-state-sit"
-          echo "Checking if the S3 bucket $BUCKET_NAME exists in region ${{ env.AWS_REGION }}..."
-
-          # Use AWS CLI to check if the bucket exists
-          aws s3 ls "s3://$BUCKET_NAME" --region ${{ env.AWS_REGION }} || echo "Bucket $BUCKET_NAME does not exist in region ${{ env.AWS_REGION }}"
-
-      # Step 6: Initialize Terraform and create S3 buckets for state and lock (if not existing)
+      # Step 5: Initialize Terraform and create S3 buckets for state and lock
       - name: Initialize Terraform and create S3 buckets for state and lock
         run: |
           ENVIRONMENT="sit"  # Static since we're only running for sit environment
