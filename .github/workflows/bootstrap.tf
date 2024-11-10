@@ -1,18 +1,18 @@
 # # bootstrap.tf
 
-# # Variable for environment
-# variable "environment" {
-#   description = "The environment (e.g., dev, prod)"
-#   type        = string
-#   default     = "dev"  # Default to dev if not passed
-# }
+# Variable for environment
+variable "environment" {
+  description = "The environment (e.g., dev, prod)"
+  type        = string
+  default     = "dev"  # Default to dev if not passed
+}
 
-# # Variable for AWS Region
-# variable "aws_region" {
-#   description = "The AWS region"
-#   type        = string
-#   # default     = "us-west-2"  # Default to a region if not passed
-# }
+# Variable for AWS Region
+variable "aws_region" {
+  description = "The AWS region"
+  type        = string
+  # default     = "us-west-2"  # Default to a region if not passed
+}
 
 # # Check if the state bucket exists
 # data "aws_s3_bucket" "state_bucket_check" {
