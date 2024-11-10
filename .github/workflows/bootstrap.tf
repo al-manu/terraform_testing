@@ -71,14 +71,12 @@ data "aws_s3_bucket" "lock_bucket_check" {
 resource "aws_s3_bucket" "state_bucket" {
   bucket = "dw-test-state-${var.environment}"  # This will create a bucket per environment (dev, sit, prod)
   acl    = "private"
-  region = var.aws_region
 }
 
 # Create S3 Bucket for lock
 resource "aws_s3_bucket" "lock_bucket" {
   bucket = "dw-test-lock-${var.environment}"  # This will create a lock bucket per environment
   acl    = "private"
-  region = var.aws_region
 }
 
 # Optionally, add logging, versioning, or encryption for better security and management
