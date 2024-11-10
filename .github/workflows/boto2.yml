@@ -42,7 +42,7 @@ jobs:
       # Step 5: Initialize Terraform and create S3 buckets for state and lock
       - name: Initialize Terraform and create S3 buckets for state and lock
         run: |
-          ENVIRONMENT="dev"  # Static since we're only running for dev environment
+          ENVIRONMENT="sit"  # Static since we're only running for dev environment
           AWS_REGION="${{ env.AWS_REGION }}"  # Use AWS region from environment
 
           # Move to the correct directory (if needed)
