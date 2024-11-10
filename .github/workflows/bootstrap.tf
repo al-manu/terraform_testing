@@ -40,7 +40,10 @@ resource "aws_s3_bucket" "state_bucket" {
 # Create the lock bucket if it doesn't exist
 resource "aws_s3_bucket" "lock_bucket" {
   bucket = "dw-test-lock-${var.environment}"
-  acl    = "private"
+  # Enable versioning for state file recovery
+  versioning {
+    enabled = true
+  }
   # Only create if it doesn't already exist
   lifecycle {
     prevent_destroy = true  # Prevent accidental deletion
