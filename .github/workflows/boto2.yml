@@ -1,9 +1,12 @@
 name: Bootstraping v1
 
 on:
-  push:
-    branches:
-      - 'feature/*'  # Trigger on push to any feature branch
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Specify the environment to destroy (dev, sit, prod)'
+        required: true
+        default: 'dev'
 
 jobs:
   create-resources:
