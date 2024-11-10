@@ -30,12 +30,14 @@ jobs:
       - name: Debug AWS_REGION
         run: echo "AWS_REGION=${{ secrets.AWS_REGION }}"
 
-      # Step 4: Set up AWS OIDC credentials
+# Step 4: Set up AWS OIDC credentials
       - name: Set up AWS OIDC credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets[env.ROLE_ARN] }}
-          aws-region: ${{ env.AWS_REGION }}  # Directly pass the region from the secret
+          aws-region: ${{ secrets.AWS_REGION }}  # Use the AWS region directly from secrets
+
+
 
       # Step 5: Initialize Terraform and create S3 buckets for state and lock
       - name: Initialize Terraform and create S3 buckets for state and lock
