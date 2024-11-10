@@ -13,7 +13,7 @@ jobs:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
     environment:
-      name: dev  # Make sure to run only for the 'dev' environment
+      name: sit  # Make sure to run only for the 'dev' environment
 
     steps:
       # Step 1: Checkout the repository
@@ -23,7 +23,7 @@ jobs:
       # Step 2: Set role ARN and AWS region for the dev environment
       - name: Set role ARN and AWS region for dev environment
         run: |
-          echo "ROLE_ARN=${{ secrets.AWS_DEV_ROLE_ARN }}" >> $GITHUB_ENV  # Use the secret for dev role ARN
+          echo "ROLE_ARN=${{ secrets.AWS_SIT_ROLE_ARN }}" >> $GITHUB_ENV  # Use the secret for dev role ARN
           echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV  # Use the secret for AWS region
 
       # Step 3: Debug to check if AWS_REGION is set correctly
