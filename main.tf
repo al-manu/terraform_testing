@@ -1,7 +1,6 @@
 
 # Create S3 buckets dynamically based on environment
 resource "aws_s3_bucket" "in_bucket" {
-  # bucket = "in-bucket-${var.environment}-061124"  # Unique bucket name for each environment
   bucket = var.in_bucket_name 
 }
 
