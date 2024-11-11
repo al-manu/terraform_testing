@@ -3,7 +3,8 @@ name: Deploy to DEV environment
 on:
   push:
     branches:
-      - feature/*  # Trigger on push to feature branches
+      -main
+      # - feature/*  # Trigger on push to feature branches
 
 jobs:
   terraform:

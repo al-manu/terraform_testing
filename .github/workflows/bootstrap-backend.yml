@@ -1,10 +1,10 @@
 name: Bootstrap Terraform Backend
 
 on:
-   workflow_dispatch
-#   push:
-#     branches:
-#       - main  # Trigger this workflow when changes are pushed to main branch
+#    workflow_dispatch
+  push:
+    branches:
+      - 'feature/*'  # Trigger this workflow when changes are pushed to main branch
 
 jobs:
   bootstrap:
