@@ -12,10 +12,10 @@ jobs:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
     environment:
-      name: dev  # This can be dynamically set based on your environment
+      name: sit  # This can be dynamically set based on your environment
 
     env:
-      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # The role ARN for assuming the dev role
+      AWS_ROLE_ARN: ${{ secrets.AWS_SIT_ROLE_ARN }}  # The role ARN for assuming the dev role
       AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region from secrets
       STATE_BUCKET_NAME: ${{ secrets.STATE_BUCKET_NAME }}
       LOCK_BUCKET_NAME: ${{ secrets.LOCK_BUCKET_NAME }}
@@ -32,7 +32,7 @@ jobs:
 
       - name: Initialize Terraform with inline backend configuration
         run: |
-          ENVIRONMENT="dev"  # Set your environment dynamically
+          ENVIRONMENT="sit"  # Set your environment dynamically
           AWS_REGION="${{ secrets.AWS_REGION }}"
 
           # Initialize Terraform for creating the S3 state and lock buckets
@@ -44,7 +44,7 @@ jobs:
       - name: Apply Terraform with the environment-specific tfvars file
         run: |
           ENVIRONMENT="${{ env.ENVIRONMENT }}"
-          TFVARS_FILE="environments/dev.tfvars"  # For example: dev.tfvars, prod.tfvars, etc.
+          TFVARS_FILE="environments/sit.tfvars"  # For example: dev.tfvars, prod.tfvars, etc.
           echo "Using tfvars file: $TFVARS_FILE"
           # Apply Terraform using the correct tfvars file
           terraform apply -auto-approve -var-file="$TFVARS_FILE"
