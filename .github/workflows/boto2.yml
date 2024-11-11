@@ -1,10 +1,17 @@
 name: Bootstraping v1 (SIT)
 
+# on:
+#   push:
+#     branches:
+#       - 'feature/*'  # Trigger on push to any feature branch
+#       # - 'main'  # Uncomment this line to trigger on main if desired
 on:
-  push:
-    branches:
-      - 'feature/*'  # Trigger on push to any feature branch
-      # - 'main'  # Uncomment this line to trigger on main if desired
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Specify the environment to destroy (dev, sit, prod)'
+        required: true
+        default: 'dev'
 
 jobs:
   create-resources:
