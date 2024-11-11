@@ -41,9 +41,13 @@ jobs:
                          -backend-config="region=${AWS_REGION}" \
                          -backend-config="dynamodb_table=${{ secrets.LOCK_BUCKET_NAME }}"
 
-      - name: Apply Terraform to create S3 state and lock buckets
+      - name: Apply Terraform with the environment-specific tfvars file
         run: |
-          terraform apply -auto-approve -var "aws_region=${AWS_REGION}" -var "environment=${ENVIRONMENT}"
+          ENVIRONMENT="${{ env.ENVIRONMENT }}"
+          TFVARS_FILE="${ENVIRONMENT}.tfvars"  # For example: dev.tfvars, prod.tfvars, etc.
+          echo "Using tfvars file: $TFVARS_FILE"
+          # Apply Terraform using the correct tfvars file
+          terraform apply -auto-approve -var-file="$TFVARS_FILE"
 
       - name: Output the created buckets
         run: |
