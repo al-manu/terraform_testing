@@ -1,0 +1,92 @@
+name: Deploy to DEV environment
+
+on:
+  push:
+    branches:
+      -main
+      # - feature/*  # Trigger on push to feature branches
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC role assumption
+      contents: read   # Required for checking out the code
+
+    environment:
+      name: dev  # Set the environment as 'dev'
+    
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
+      TF_STATE_BUCKET: ${{ secrets.STATE_BUCKET_NAME }}  # Use the TF state bucket from secrets
+      TF_LOCK_BUCKET: ${{ secrets.LOCK_BUCKET_NAME }}  # Use the lock bucket from secrets
+      TF_STATE_FILE: "terraform/dev/dev.tfstate"  # Path to state file in S3
+
+    steps:
+      # Checkout code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.9.8
+
+      # Configure AWS credentials via OIDC to assume the role
+      - name: Configure AWS credentials
+        id: aws_auth
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}  # Use the AWS_ROLE_ARN from env
+          aws-region: ${{ env.AWS_REGION }}  # Use the AWS region from env
+
+      # Terraform Format (Auto-fix)
+      - name: Terraform Format (Auto-fix)
+        run: |
+          set -e
+          terraform fmt -recursive
+
+      # Terraform Init (connects to existing state and lock buckets)
+      - name: Terraform Init
+        run: |
+          set -e
+          terraform init \
+            -backend-config="bucket=${{ env.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{ env.TF_STATE_FILE }}" \
+            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="encrypt=true" \
+
+      # Terraform Validate
+      - name: Terraform Validate
+        run: |
+          set -e
+          terraform validate
+
+      # Terraform Plan
+      - name: Terraform Plan
+        id: plan
+        run: |
+          set -e
+          terraform plan -out=tfplan -var-file=environments/dev.tfvars
+
+      # Check for Changes in Plan and skip apply if none
+      - name: Check for Changes in Plan
+        run: |
+          set -e
+          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
+            echo "No changes to apply."
+            exit 0
+          fi
+
+      # Terraform Apply
+      - name: Terraform Apply
+        run: |
+          set -e
+          terraform apply -auto-approve tfplan
+
+      # Cleanup Terraform workspace
+      - name: Cleanup Terraform workspace
+        run: |
+          terraform workspace select default || terraform workspace new default

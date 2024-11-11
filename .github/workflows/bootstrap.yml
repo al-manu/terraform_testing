@@ -1,0 +1,75 @@
+name: Bootstrap AWS Resources (State and Lock S3 Buckets)
+
+on:
+  push:
+    branches:
+      # - 'feature/*'  # Trigger on push to any feature branch
+      - main
+
+jobs:
+  create-resources:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read   # Required for checking out the code
+    environment:
+      name: dev  # This can be dynamically set based on your environment
+
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # The role ARN for assuming the dev role
+      AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region from secrets
+      STATE_BUCKET_NAME: ${{ secrets.STATE_BUCKET_NAME }}
+      LOCK_BUCKET_NAME: ${{ secrets.LOCK_BUCKET_NAME }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up AWS OIDC credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Initialize Terraform with inline backend configuration
+        run: |
+          ENVIRONMENT="dev"  # Set your environment dynamically
+          AWS_REGION="${{ secrets.AWS_REGION }}"
+
+          # Initialize Terraform for creating the S3 state and lock buckets
+          terraform init -backend-config="bucket=${{ secrets.STATE_BUCKET_NAME }}" \
+                         -backend-config="key=terraform.tfstate" \
+                         -backend-config="region=${AWS_REGION}" \
+                         -backend-config="lock_table=${{ secrets.LOCK_BUCKET_NAME }}"
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan -var-file=environments/dev.tfvars
+
+      - name: Check for Changes in Plan
+        run: |
+          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
+            echo "No changes to apply."
+            exit 0
+          fi
+
+      - name: Apply Terraform with the environment-specific tfvars file
+        run: |
+          ENVIRONMENT="${{ env.ENVIRONMENT }}"
+          TFVARS_FILE="environments/dev.tfvars"  # For example: dev.tfvars, prod.tfvars, etc.
+          echo "Using tfvars file: $TFVARS_FILE"
+          # Apply Terraform using the correct tfvars file
+          terraform apply -auto-approve -var-file="$TFVARS_FILE"
+
+      # - name: Output the created buckets
+      #   run: |
+      #     STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
+      #     LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
+
+      #     echo "State bucket: $STATE_BUCKET_NAME"
+      #     echo "Lock bucket: $LOCK_BUCKET_NAME"
+
+      #     # Set the bucket names as GitHub environment variables for future steps
+      #     echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
+      #     echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV

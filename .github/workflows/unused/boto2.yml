@@ -1,0 +1,90 @@
+name: Bootstraping v1 (SIT)
+
+# on:
+#   push:
+#     branches:
+#       - 'feature/*'  # Trigger on push to any feature branch
+#       # - 'main'  # Uncomment this line to trigger on main if desired
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Specify the environment to destroy (dev, sit, prod)'
+        required: true
+        default: 'dev'
+
+jobs:
+  create-resources:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read   # Required for checking out the code
+    environment:
+      name: sit  # Make sure to run only for the 'sit' environment
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set role ARN and AWS region for the sit environment
+      - name: Set role ARN and AWS region for sit environment
+        run: |
+          echo "ROLE_ARN=${{ secrets.AWS_SIT_ROLE_ARN }}" >> $GITHUB_ENV  # Use the secret for sit role ARN
+          echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV  # Use the secret for AWS region
+
+      # Step 3: Debug to check if AWS_REGION and ROLE_ARN are set correctly
+      - name: Debug AWS_REGION and ROLE_ARN
+        run: |
+          echo "AWS_REGION=${{ env.AWS_REGION }}"
+          echo "ROLE_ARN=${{ env.ROLE_ARN }}"
+
+      # Step 4: Set up AWS OIDC credentials
+      - name: Set up AWS OIDC credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ env.ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}  # Use the AWS region from environment variable
+
+      # Step 5: Verify if the S3 bucket exists
+      - name: Verify S3 bucket exists
+        run: |
+          BUCKET_NAME="dw-test-state-sit"
+          echo "Checking if the S3 bucket $BUCKET_NAME exists in region ${{ env.AWS_REGION }}..."
+
+          # Use AWS CLI to check if the bucket exists
+          aws s3 ls "s3://$BUCKET_NAME" --region ${{ env.AWS_REGION }} || echo "Bucket $BUCKET_NAME does not exist in region ${{ env.AWS_REGION }}"
+
+      # Step 6: Initialize Terraform and create S3 buckets for state and lock (if not existing)
+      - name: Initialize Terraform and create S3 buckets for state and lock
+        run: |
+          ENVIRONMENT="sit"  # Static since we're only running for sit environment
+          AWS_REGION="${{ env.AWS_REGION }}"  # Use AWS region from environment
+
+          # Move to the correct directory (if needed)
+          cd .github/workflows
+
+          # Initialize Terraform
+          terraform init
+
+          # Apply the Terraform configuration to create the S3 buckets for state and lock
+          terraform apply -auto-approve -var "aws_region=${AWS_REGION}" -var "environment=${ENVIRONMENT}"
+
+          # Get the bucket names from the Terraform output
+          STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
+          LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
+
+          echo "State bucket: $STATE_BUCKET_NAME"
+          echo "Lock bucket: $LOCK_BUCKET_NAME"
+
+          # Save the bucket names as environment variables for subsequent steps
+          echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
+          echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
+
+      # Optionally, you can add additional steps for verification or further automation
+      # Example: Verifying the created S3 buckets (optional)
+      - name: Verify the S3 buckets
+        run: |
+          echo "Verifying the existence of the state and lock S3 buckets..."
+          aws s3 ls "s3://$STATE_BUCKET_NAME" || echo "State bucket $STATE_BUCKET_NAME does not exist."
+          aws s3 ls "s3://$LOCK_BUCKET_NAME" || echo "Lock bucket $LOCK_BUCKET_NAME does not exist."
