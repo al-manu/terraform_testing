@@ -41,6 +41,18 @@ jobs:
                          -backend-config="region=${AWS_REGION}" \
                          -backend-config="dynamodb_table=${{ secrets.LOCK_BUCKET_NAME }}"
 
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan -var-file=environments/prod.tfvars
+
+      - name: Check for Changes in Plan
+        run: |
+          if terraform show tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
+            echo "No changes to apply."
+            exit 0
+          fi
+
       - name: Apply Terraform with the environment-specific tfvars file
         run: |
           ENVIRONMENT="${{ env.ENVIRONMENT }}"
