@@ -27,9 +27,9 @@
 #   value       = var.tf_state_lock_table
 # }
 output "state_bucket_name" {
-  value = aws_s3_bucket.state_bucket[0].bucket
+  value = length(aws_s3_bucket.state_bucket) > 0 ? aws_s3_bucket.state_bucket[0].bucket : null
 }
 
 output "lock_bucket_name" {
-  value = aws_s3_bucket.lock_bucket[0].bucket
+  value = length(aws_s3_bucket.lock_bucket) > 0 ? aws_s3_bucket.lock_bucket[0].bucket : null
 }
