@@ -61,14 +61,14 @@ jobs:
           # Apply Terraform using the correct tfvars file
           terraform apply -auto-approve -var-file="$TFVARS_FILE"
 
-      - name: Output the created buckets
-        run: |
-          STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
-          LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
+      # - name: Output the created buckets
+      #   run: |
+      #     STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
+      #     LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
 
-          echo "State bucket: $STATE_BUCKET_NAME"
-          echo "Lock bucket: $LOCK_BUCKET_NAME"
+      #     echo "State bucket: $STATE_BUCKET_NAME"
+      #     echo "Lock bucket: $LOCK_BUCKET_NAME"
 
-          # Set the bucket names as GitHub environment variables for future steps
-          echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
-          echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
+      #     # Set the bucket names as GitHub environment variables for future steps
+      #     echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
+      #     echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV
