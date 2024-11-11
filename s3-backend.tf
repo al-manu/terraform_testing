@@ -60,9 +60,9 @@
 #   # Using the data block to check if the bucket already exists
 
 # }
-#   data "aws_s3_bucket" "existing_state" {
-#     bucket = "${var.environment}-state-bucket1"
-#   }
+  data "aws_s3_bucket" "existing_state" {
+    bucket = "${var.environment}-state-bucket1"
+  }
 
 # resource "aws_s3_bucket" "lock_bucket" {
 #   bucket = "${var.environment}-lock-bucket1"
@@ -82,9 +82,9 @@
 
 # }
 
-#   data "aws_s3_bucket" "existing_lock" {
-#     bucket = "${var.environment}-lock-bucket1"
-#   }
+  data "aws_s3_bucket" "existing_lock" {
+    bucket = "${var.environment}-lock-bucket1"
+  }
 
 
 
