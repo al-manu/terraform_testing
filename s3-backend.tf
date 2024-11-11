@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "state_bucket" {
-  bucket = "${var.environment}-state-bucket"
+  bucket = "${var.environment}-state-bucket1"
   acl    = "private"
 
   tags = {
@@ -9,7 +9,7 @@ resource "aws_s3_bucket" "state_bucket" {
 }
 
 resource "aws_s3_bucket" "lock_bucket" {
-  bucket = "${var.environment}-lock-bucket"
+  bucket = "${var.environment}-lock-bucket1"
   acl    = "private"
 
   tags = {
