@@ -8,3 +8,15 @@ environment = "prod"
 # TF_STATE_LOCK_TABLE = "terraform-lock-prod"            # Prod-specific DynamoDB table for locking
 tf_state_bucket   = "my-terraform1-state-prod"  # Unique S3 bucket for prod
 tf_state_lock_table = "my-terraform1-lock-table-prod"  # Unique lock object in S3 for prod
+
+# S3 bucket name for storing Terraform state
+state_bucket_name = "my-terraform1-state-prod"
+
+# S3 bucket name for locking Terraform state
+lock_bucket_name = "my-terraform1-lock-prod"
+
+# Optional: Enable encryption for state bucket
+enable_encryption = true
+
+# Optional: Enable versioning for state bucket
+enable_versioning = true
