@@ -11,8 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      id-token: write  # Required for OIDC role assumption
+      id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
+    environment:
+      name: dev  # This can be dynamically set based on your environment
 
     steps:
       - name: Checkout code
