@@ -54,10 +54,10 @@
 # }
 
 
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-}
+# variable "aws_region" {
+#   description = "AWS region"
+#   type        = string
+# }
 
 variable "environment" {
   description = "The environment (e.g., dev, staging, prod)"
