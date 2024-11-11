@@ -93,6 +93,9 @@
 resource "aws_s3_bucket" "state_bucket" {
   count = length(data.aws_s3_bucket.existing_state.id) == 0 ? 1 : 0
   bucket = "${var.environment}-state-bucket1"
+   versioning {
+    enabled = true  # Directly enable versioning
+  }
 
   lifecycle {
     prevent_destroy = true
@@ -107,6 +110,9 @@ resource "aws_s3_bucket" "state_bucket" {
 resource "aws_s3_bucket" "lock_bucket" {
   count = length(data.aws_s3_bucket.existing_lock.id) == 0 ? 1 : 0
   bucket = "${var.environment}-lock-bucket1"
+  versioning {
+    enabled = true  # Directly enable versioning
+  }
 
   lifecycle {
     prevent_destroy = true
