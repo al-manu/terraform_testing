@@ -44,10 +44,10 @@ jobs:
       - name: Apply Terraform with the environment-specific tfvars file
         run: |
           ENVIRONMENT="${{ env.ENVIRONMENT }}"
-          TFVARS_FILE="dev.tfvars"  # For example: dev.tfvars, prod.tfvars, etc.
+          TFVARS_FILE="environments/dev.tfvars"  # For example: dev.tfvars, prod.tfvars, etc.
           echo "Using tfvars file: $TFVARS_FILE"
           # Apply Terraform using the correct tfvars file
-          terraform apply -auto-approve -var-file="dev.tfvars"
+          terraform apply -auto-approve -var-file="$TFVARS_FILE"
 
       - name: Output the created buckets
         run: |
