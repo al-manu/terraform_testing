@@ -28,9 +28,9 @@
 # }
 
 output "state_bucket_name" {
-  value = aws_s3_bucket.state_bucket.bucket
+  value = aws_s3_bucket.state_bucket[0].bucket
 }
 
 output "lock_bucket_name" {
-  value = aws_s3_bucket.lock_bucket.bucket
+  value = aws_s3_bucket.lock_bucket[0].bucket
 }
