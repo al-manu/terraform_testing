@@ -45,6 +45,7 @@
 
 resource "aws_s3_bucket" "state_bucket" {
   bucket = "${var.environment}-state-bucket1"
+  count  = length(data.aws_s3_bucket.existing_state.id) == 0 ? 1 : 0  # Create only if it doesn't exist
   acl    = "private"
 
   lifecycle {
@@ -65,6 +66,7 @@ resource "aws_s3_bucket" "state_bucket" {
 
 resource "aws_s3_bucket" "lock_bucket" {
   bucket = "${var.environment}-lock-bucket1"
+  count  = length(data.aws_s3_bucket.existing_lock.id) == 0 ? 1 : 0  # Create only if it doesn't exist
   acl    = "private"
 
   lifecycle {
