@@ -12,7 +12,7 @@ jobs:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
     environment:
-      name: sit  # This can be dynamically set based on your environment
+      name: prod  # This can be dynamically set based on your environment
 
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_PROD_ROLE_ARN }}  # The role ARN for assuming the dev role
