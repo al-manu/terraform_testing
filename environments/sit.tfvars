@@ -8,3 +8,15 @@ environment = "sit"
 # TF_STATE_LOCK_TABLE = "terraform-lock-sit"             # Sit-specific DynamoDB table for locking
 tf_state_bucket   = "my-terraform1-state-sit"  # Unique S3 bucket for sit
 tf_state_lock_table = "my-terraform1-lock-table-sit"  # Unique lock object in S3 for sit
+
+# S3 bucket name for storing Terraform state
+state_bucket_name = "my-terraform1-state-sit"
+
+# S3 bucket name for locking Terraform state
+lock_bucket_name = "my-terraform1-lock-sit"
+
+# Optional: Enable encryption for state bucket
+enable_encryption = true
+
+# Optional: Enable versioning for state bucket
+enable_versioning = true
