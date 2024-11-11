@@ -12,13 +12,12 @@ jobs:
       id-token: write  # Required for OIDC
       contents: read   # Required for checking out the code
     environment:
-      name: dev  # This can be dynamically set based on your environment
+      name: ${{ github.ref }}  # You can dynamically set environment based on the branch
 
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # The role ARN for assuming the dev role
       AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region from secrets
-      STATE_BUCKET_NAME: ${{ secrets.STATE_BUCKET_NAME }}
-      LOCK_BUCKET_NAME: ${{ secrets.LOCK_BUCKET_NAME }}
+      ENVIRONMENT: "dev"  # Default to dev, but this can be set dynamically based on the branch or other logic
 
     steps:
       - name: Checkout repository
@@ -32,23 +31,34 @@ jobs:
 
       - name: Initialize Terraform with inline backend configuration
         run: |
-          ENVIRONMENT="dev"  # Set your environment dynamically
-          AWS_REGION="${{ secrets.AWS_REGION }}"
+          # Dynamically set the environment and tfvars file
+          ENVIRONMENT="${{ env.ENVIRONMENT }}"  # Default to dev if not set
+          TFVARS_FILE="${ENVIRONMENT}.tfvars"   # Use dev.tfvars, prod.tfvars, etc.
 
-          # Initialize Terraform for creating the S3 state and lock buckets
+          # Debug: output the path of the tfvars file to ensure it's correct
+          echo "Using tfvars file: $TFVARS_FILE"
+
+          # Initialize Terraform with backend config
           terraform init -backend-config="bucket=${{ secrets.STATE_BUCKET_NAME }}" \
                          -backend-config="key=terraform.tfstate" \
-                         -backend-config="region=${AWS_REGION}" \
+                         -backend-config="region=${{ secrets.AWS_REGION }}" \
                          -backend-config="dynamodb_table=${{ secrets.LOCK_BUCKET_NAME }}"
 
       - name: Apply Terraform with the environment-specific tfvars file
         run: |
           ENVIRONMENT="${{ env.ENVIRONMENT }}"
           TFVARS_FILE="${ENVIRONMENT}.tfvars"  # For example: dev.tfvars, prod.tfvars, etc.
+          
           echo "Using tfvars file: $TFVARS_FILE"
-          # Apply Terraform using the correct tfvars file
-          terraform apply -auto-approve -var-file="$TFVARS_FILE"
 
+          # Check if the tfvars file exists, and apply Terraform
+          if [ -f "$TFVARS_FILE" ]; then
+            terraform apply -auto-approve -var-file="$TFVARS_FILE"
+          else
+            echo "Error: $TFVARS_FILE not found!"
+            exit 1
+          fi
+          
       - name: Output the created buckets
         run: |
           STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
