@@ -1,5 +1,3 @@
-# backend.tf: Configure S3 as the backend for both state storage and locking
-
 
 terraform {
   backend "s3" {
@@ -11,6 +9,11 @@ terraform {
     lock_table     = var.lock_bucket  # Use the S3 locking mechanism (no need for DynamoDB)
   }
 }
+
+
+
+# backend.tf: Configure S3 as the backend for both state storage and locking
+
 
 # terraform {
 #   backend "s3" {
