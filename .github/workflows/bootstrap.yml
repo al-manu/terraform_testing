@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'feature/*'  # Trigger on push to any feature branch
-      # -main
 
 jobs:
   create-resources:
@@ -18,6 +17,8 @@ jobs:
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # The role ARN for assuming the dev role
       AWS_REGION: ${{ secrets.AWS_REGION }}  # The AWS region from secrets
+      STATE_BUCKET_NAME: ${{ secrets.STATE_BUCKET_NAME }}
+      LOCK_BUCKET_NAME: ${{ secrets.LOCK_BUCKET_NAME }}
 
     steps:
       - name: Checkout repository
@@ -29,26 +30,29 @@ jobs:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Initialize Terraform and create S3 buckets for state and lock
+      - name: Initialize Terraform with inline backend configuration
         run: |
-          # Set environment-specific variables
-          ENVIRONMENT="dev"  # Adjust dynamically based on your environment setup
+          ENVIRONMENT="dev"  # Set your environment dynamically
           AWS_REGION="${{ secrets.AWS_REGION }}"
 
-          cd .github/workflows
-          # Initialize Terraform
-          terraform init
+          # Initialize Terraform for creating the S3 state and lock buckets
+          terraform init -backend-config="bucket=${{ secrets.STATE_BUCKET_NAME }}" \
+                         -backend-config="key=terraform.tfstate" \
+                         -backend-config="region=${AWS_REGION}" \
+                         -backend-config="dynamodb_table=${{ secrets.LOCK_BUCKET_NAME }}"
 
-          # Apply Terraform to create the S3 state and lock buckets
+      - name: Apply Terraform to create S3 state and lock buckets
+        run: |
           terraform apply -auto-approve -var "aws_region=${AWS_REGION}" -var "environment=${ENVIRONMENT}"
 
-          # Output the created resources
+      - name: Output the created buckets
+        run: |
           STATE_BUCKET_NAME=$(terraform output -raw state_bucket_name)
           LOCK_BUCKET_NAME=$(terraform output -raw lock_bucket_name)
 
           echo "State bucket: $STATE_BUCKET_NAME"
           echo "Lock bucket: $LOCK_BUCKET_NAME"
 
-          # Set the bucket names in the GitHub environment so they can be used later
+          # Set the bucket names as GitHub environment variables for future steps
           echo "state_bucket=$STATE_BUCKET_NAME" >> $GITHUB_ENV
           echo "lock_bucket=$LOCK_BUCKET_NAME" >> $GITHUB_ENV

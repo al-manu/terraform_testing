@@ -10,13 +10,16 @@ environment = "dev"
 # tf_state_lock_table = "my-terraform-lock-table-dev"  # Unique lock object in S3 for dev
 
 # S3 bucket name for storing Terraform state
-state_bucket_name = "my-terraform-state-dev"
+state_bucket_name = "my-terraform1-state-dev"
 
 # S3 bucket name for locking Terraform state
-lock_bucket_name = "my-terraform-lock-dev"
+lock_bucket_name = "my-terraform1-lock-dev"
 
 # Optional: Enable encryption for state bucket
 enable_encryption = true
 
 # Optional: Enable versioning for state bucket
 enable_versioning = true
+
+# state_bucket_name   = "prod-state-bucket"
+# lock_bucket_name    = "prod-lock-bucket"

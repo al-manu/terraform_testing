@@ -1,7 +1,7 @@
-variable "environment" {
-  description = "The environment to deploy to (dev, sit, prod)"
-  type        = string
-}
+# variable "environment" {
+#   description = "The environment to deploy to (dev, sit, prod)"
+#   type        = string
+# }
 
 variable "in_bucket_name" {
   description = "Name of the input S3 bucket"
@@ -42,13 +42,34 @@ variable "export_bucket_name" {
 #   type        = string
 # }
 
-variable "tf_state_bucket" {
-  description = "The S3 bucket to store Terraform state files"
+# variable "tf_state_bucket" {
+#   description = "The S3 bucket to store Terraform state files"
+#   type        = string
+# }
+
+# variable "tf_state_lock_table" {
+#   description = "The lock table for Terraform state locking in S3"
+#   type        = string
+#   default     = "terraform-lock-table"  # This is the default lock table if not specified in `.tfvars`
+# }
+
+
+variable "aws_region" {
+  description = "AWS region"
   type        = string
 }
 
-variable "tf_state_lock_table" {
-  description = "The lock table for Terraform state locking in S3"
+variable "environment" {
+  description = "The environment (e.g., dev, staging, prod)"
   type        = string
-  default     = "terraform-lock-table"  # This is the default lock table if not specified in `.tfvars`
+}
+
+variable "state_bucket_name" {
+  description = "The name of the S3 bucket for Terraform state"
+  type        = string
+}
+
+variable "lock_bucket_name" {
+  description = "The name of the S3 bucket for Terraform lock"
+  type        = string
 }

@@ -17,12 +17,20 @@ output "export_bucket_arn" {
 
 # outputs.tf: Output the backend resource configurations for review
 
-output "tf_state_bucket" {
-  description = "The S3 bucket where Terraform state is stored"
-  value       = var.tf_state_bucket
+# output "tf_state_bucket" {
+#   description = "The S3 bucket where Terraform state is stored"
+#   value       = var.tf_state_bucket
+# }
+
+# output "tf_state_lock_table" {
+#   description = "The S3-based lock table used for Terraform state locking"
+#   value       = var.tf_state_lock_table
+# }
+
+output "state_bucket_name" {
+  value = aws_s3_bucket.state_bucket.bucket
 }
 
-output "tf_state_lock_table" {
-  description = "The S3-based lock table used for Terraform state locking"
-  value       = var.tf_state_lock_table
+output "lock_bucket_name" {
+  value = aws_s3_bucket.lock_bucket.bucket
 }
