@@ -39,7 +39,7 @@ jobs:
           terraform init -backend-config="bucket=${{ secrets.STATE_BUCKET_NAME }}" \
                          -backend-config="key=terraform.tfstate" \
                          -backend-config="region=${AWS_REGION}" \
-                         -backend-config="dynamodb_table=${{ secrets.LOCK_BUCKET_NAME }}"
+                         -backend-config="lock_table=${{ secrets.LOCK_BUCKET_NAME }}"
 
       - name: Terraform Plan
         id: plan

@@ -3,8 +3,7 @@ name: Deploy to DEV environment
 on:
   push:
     branches:
-      # - feature/*  # Trigger on push to main branch
-      - main
+      - feature/*  # Trigger on push to feature branches
 
 jobs:
   terraform:
@@ -19,8 +18,9 @@ jobs:
     env:
       AWS_ROLE_ARN: ${{ secrets.AWS_DEV_ROLE_ARN }}  # Set AWS role ARN for DEV
       AWS_REGION: ${{ secrets.AWS_REGION }}  # AWS region
-      TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}  # Use the TF state bucket for this environment
-      TF_STATE_FILE: "terraform/${{ github.event.inputs.environment }}/dev.tfstate"  # Path to state file in S3
+      TF_STATE_BUCKET: ${{ secrets.STATE_BUCKET_NAME }}  # Use the TF state bucket from secrets
+      TF_LOCK_BUCKET: ${{ secrets.LOCK_BUCKET_NAME }}  # Use the lock bucket from secrets
+      TF_STATE_FILE: "terraform/dev/dev.tfstate"  # Path to state file in S3
 
     steps:
       # Checkout code from the repository
@@ -47,21 +47,7 @@ jobs:
           set -e
           terraform fmt -recursive
 
-      # Ensure S3 Bucket exists for state storage and locking
-      - name: Create S3 bucket if not exists
-        run: |
-          BUCKET_NAME="${{ env.TF_STATE_BUCKET }}"
-          STATE_FILE="${{ env.TF_STATE_FILE }}"
-
-          # Check if the bucket exists, if not create it
-          aws s3api head-bucket --bucket $BUCKET_NAME || aws s3api create-bucket --bucket $BUCKET_NAME --region ${{ env.AWS_REGION }} --create-bucket-configuration LocationConstraint=${{ env.AWS_REGION }} || echo "Bucket already exists"
-          
-          # Create an empty state file to initialize it
-          aws s3 cp /dev/null s3://$BUCKET_NAME/$STATE_FILE
-          
-          echo "S3 bucket $BUCKET_NAME created (if not already) and state initialized."
-
-      # Terraform Init
+      # Terraform Init (connects to existing state and lock buckets)
       - name: Terraform Init
         run: |
           set -e
@@ -69,7 +55,8 @@ jobs:
             -backend-config="bucket=${{ env.TF_STATE_BUCKET }}" \
             -backend-config="key=${{ env.TF_STATE_FILE }}" \
             -backend-config="region=${{ env.AWS_REGION }}" \
-            -backend-config="encrypt=true"  # Encrypt state file in S3
+            -backend-config="encrypt=true" \
+            -backend-config="dynamodb_table=${{ env.TF_LOCK_BUCKET }}"  # DynamoDB table for locking (if using DynamoDB)
 
       # Terraform Validate
       - name: Terraform Validate
