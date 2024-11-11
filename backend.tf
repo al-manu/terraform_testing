@@ -1,5 +1,6 @@
 # backend.tf: Configure S3 as the backend for both state storage and locking
 
+
 terraform {
   backend "s3" {
     bucket         = var.state_bucket  # S3 bucket to store state
